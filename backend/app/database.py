@@ -31,6 +31,6 @@ def get_db():
 
 
 def init_db() -> None:
-    # Import models here (once they exist) so they register on Base.metadata
-    # before create_all runs, e.g.: from app.models import campaign  # noqa
+    from app.models import campaign  # noqa: F401  (registers Dataset/Campaign on Base.metadata)
+
     Base.metadata.create_all(bind=engine)
