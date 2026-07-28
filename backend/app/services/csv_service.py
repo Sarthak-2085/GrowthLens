@@ -6,6 +6,11 @@ REQUIRED_COLUMNS = ["campaign", "budget", "clicks", "impressions", "conversions"
 INT_COLUMNS = ["clicks", "impressions", "conversions"]
 FLOAT_COLUMNS = ["budget", "revenue"]
 
+# Optional — filled with sensible defaults when absent so older/simpler CSVs still work.
+ALLOWED_STATUS = {"active", "paused", "completed", "draft"}
+DEFAULT_CHANNEL = "Other"
+DEFAULT_STATUS = "active"
+
 
 class CsvValidationError(Exception):
     """Raised when the CSV can't be processed at all (bad format / missing columns / no valid rows)."""
@@ -61,8 +66,30 @@ def parse_campaign_csv(file_bytes: bytes) -> tuple[list[dict], list[dict]]:
                 break
             parsed[col] = int(num) if col in INT_COLUMNS else round(num, 2)
 
-        if row_ok:
-            valid_rows.append(parsed)
+        if not row_ok:
+            continue
+
+        # Optional columns — default rather than reject the row.
+        if "channel" in df.columns:
+            channel = str(row.get("channel", "")).strip()
+            parsed["channel"] = channel if channel and channel.lower() != "nan" else DEFAULT_CHANNEL
+        else:
+            parsed["channel"] = DEFAULT_CHANNEL
+
+        if "status" in df.columns:
+            status = str(row.get("status", "")).strip().lower()
+            parsed["status"] = status if status in ALLOWED_STATUS else DEFAULT_STATUS
+        else:
+            parsed["status"] = DEFAULT_STATUS
+
+        for col in ("start_date", "end_date"):
+            if col in df.columns:
+                parsed_date = pd.to_datetime(row.get(col), errors="coerce")
+                parsed[col] = None if pd.isna(parsed_date) else parsed_date.date()
+            else:
+                parsed[col] = None
+
+        valid_rows.append(parsed)
 
     if not valid_rows:
         raise CsvValidationError("No valid rows found in CSV after validation.")

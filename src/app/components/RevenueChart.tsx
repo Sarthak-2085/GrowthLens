@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   AreaChart,
   Area,
@@ -11,7 +11,9 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
-import { revenueTrend } from '@/lib/mockData';
+import EmptyState from '@/components/ui/EmptyState';
+import { CalendarRange } from 'lucide-react';
+import { useCampaigns } from './CampaignsProvider';
 
 function CustomTooltip({ active, payload, label }: {
   active?: boolean;
@@ -43,9 +45,42 @@ function CustomTooltip({ active, payload, label }: {
 }
 
 export default function RevenueChart() {
+  const { campaigns, loading } = useCampaigns();
+
+  const trend = useMemo(() => {
+    const byMonth = new Map<string, { revenue: number; spend: number; conversions: number; sortKey: string }>();
+    for (const c of campaigns) {
+      if (!c.start_date) continue;
+      const d = new Date(c.start_date);
+      const sortKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const label = d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+      const entry = byMonth.get(sortKey) || { revenue: 0, spend: 0, conversions: 0, sortKey };
+      entry.revenue += c.revenue;
+      entry.spend += c.budget; // spend proxy — see metrics.ts note
+      entry.conversions += c.conversions;
+      (entry as any).month = label;
+      byMonth.set(sortKey, entry);
+    }
+    return Array.from(byMonth.values())
+      .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+      .map((e) => ({ month: (e as any).month, revenue: e.revenue, spend: e.spend, conversions: e.conversions }));
+  }, [campaigns]);
+
+  if (loading) return <div className="h-[280px] animate-pulse rounded-md bg-muted/60" />;
+
+  if (trend.length < 2) {
+    return (
+      <EmptyState
+        icon={<CalendarRange size={24} />}
+        title="Not enough date spread yet"
+        description="Add start dates across campaigns spanning more than one month to see a revenue trend."
+      />
+    );
+  }
+
   return (
     <ResponsiveContainer width="100%" height={280}>
-      <AreaChart data={revenueTrend} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+      <AreaChart data={trend} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
         <defs>
           <linearGradient id="gradRevenue" x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor="var(--primary)" stopOpacity={0.25} />
@@ -68,13 +103,11 @@ export default function RevenueChart() {
           tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
           axisLine={false}
           tickLine={false}
-          tickFormatter={(v) => v >= 100000 ? `₹${(v / 100000).toFixed(0)}L` : `₹${(v / 1000).toFixed(0)}K`}
+          tickFormatter={(v) => (v >= 100000 ? `₹${(v / 100000).toFixed(0)}L` : `₹${(v / 1000).toFixed(0)}K`)}
           width={52}
         />
         <Tooltip content={<CustomTooltip />} />
-        <Legend
-          wrapperStyle={{ fontSize: '12px', color: 'var(--muted-foreground)', paddingTop: '12px' }}
-        />
+        <Legend wrapperStyle={{ fontSize: '12px', color: 'var(--muted-foreground)', paddingTop: '12px' }} />
         <Area
           type="monotone"
           dataKey="revenue"
@@ -88,7 +121,7 @@ export default function RevenueChart() {
         <Area
           type="monotone"
           dataKey="spend"
-          name="Spend"
+          name="Budget"
           stroke="var(--accent)"
           strokeWidth={2}
           fill="url(#gradSpend)"

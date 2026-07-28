@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   BarChart,
   Bar,
@@ -12,11 +12,10 @@ import {
   Cell,
   ReferenceLine,
 } from 'recharts';
-import { channelBreakdown } from '@/lib/mockData';
-
-const roiData = [...channelBreakdown]
-  .sort((a, b) => b.roi - a.roi)
-  .map((c) => ({ channel: c.channel, roi: c.roi, color: c.color }));
+import EmptyState from '@/components/ui/EmptyState';
+import { TrendingUp } from 'lucide-react';
+import { useCampaigns } from './CampaignsProvider';
+import { computeROI, colorForChannel } from '@/lib/metrics';
 
 function CustomTooltip({ active, payload, label }: {
   active?: boolean;
@@ -36,6 +35,37 @@ function CustomTooltip({ active, payload, label }: {
 }
 
 export default function ROIComparisonChart() {
+  const { campaigns, loading } = useCampaigns();
+
+  const roiData = useMemo(() => {
+    const byChannel = new Map<string, { revenue: number; budget: number }>();
+    for (const c of campaigns) {
+      const entry = byChannel.get(c.channel) || { revenue: 0, budget: 0 };
+      entry.revenue += c.revenue;
+      entry.budget += c.budget;
+      byChannel.set(c.channel, entry);
+    }
+    const channels = Array.from(byChannel.keys());
+    return channels
+      .map((channel) => {
+        const { revenue, budget } = byChannel.get(channel)!;
+        return { channel, roi: computeROI(revenue, budget), color: colorForChannel(channel, channels) };
+      })
+      .sort((a, b) => b.roi - a.roi);
+  }, [campaigns]);
+
+  if (loading) return <div className="h-[220px] animate-pulse rounded-md bg-muted/60" />;
+
+  if (roiData.length === 0) {
+    return (
+      <EmptyState
+        icon={<TrendingUp size={24} />}
+        title="No data yet"
+        description="Upload campaigns to compare ROI by channel."
+      />
+    );
+  }
+
   return (
     <ResponsiveContainer width="100%" height={220}>
       <BarChart data={roiData} layout="vertical" margin={{ top: 4, right: 16, left: 0, bottom: 4 }}>
@@ -59,11 +89,7 @@ export default function ROIComparisonChart() {
         <ReferenceLine x={0} stroke="var(--border)" strokeWidth={1.5} />
         <Bar dataKey="roi" radius={[0, 4, 4, 0]}>
           {roiData.map((entry, index) => (
-            <Cell
-              key={`roi-cell-${index}`}
-              fill={entry.roi >= 0 ? entry.color : 'var(--negative)'}
-              fillOpacity={0.85}
-            />
+            <Cell key={`roi-cell-${index}`} fill={entry.roi >= 0 ? entry.color : 'var(--negative)'} fillOpacity={0.85} />
           ))}
         </Bar>
       </BarChart>

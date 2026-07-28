@@ -1,6 +1,6 @@
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
-from sqlalchemy import DateTime, Float, ForeignKey, Integer, String
+from sqlalchemy import Date, DateTime, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -38,6 +38,11 @@ class Campaign(Base):
     impressions: Mapped[int] = mapped_column(Integer)
     conversions: Mapped[int] = mapped_column(Integer)
     revenue: Mapped[float] = mapped_column(Float)
+
+    channel: Mapped[str] = mapped_column(String, default="Other", server_default="Other")
+    status: Mapped[str] = mapped_column(String, default="active", server_default="active", index=True)
+    start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=_utcnow)
 

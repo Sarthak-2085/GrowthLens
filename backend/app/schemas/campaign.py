@@ -1,6 +1,9 @@
-from datetime import datetime
+from datetime import date, datetime
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
+
+CampaignStatus = Literal["active", "paused", "completed", "draft"]
 
 
 class CampaignBase(BaseModel):
@@ -10,6 +13,10 @@ class CampaignBase(BaseModel):
     impressions: int = Field(..., ge=0)
     conversions: int = Field(..., ge=0)
     revenue: float = Field(..., ge=0)
+    channel: str = Field(default="Other", min_length=1)
+    status: CampaignStatus = "active"
+    start_date: date | None = None
+    end_date: date | None = None
 
 
 class CampaignCreate(CampaignBase):
@@ -23,6 +30,10 @@ class CampaignUpdate(BaseModel):
     impressions: int | None = Field(None, ge=0)
     conversions: int | None = Field(None, ge=0)
     revenue: float | None = Field(None, ge=0)
+    channel: str | None = Field(None, min_length=1)
+    status: CampaignStatus | None = None
+    start_date: date | None = None
+    end_date: date | None = None
 
 
 class CampaignOut(CampaignBase):

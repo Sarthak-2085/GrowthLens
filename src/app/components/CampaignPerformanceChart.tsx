@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   BarChart,
   Bar,
@@ -11,14 +11,10 @@ import {
   ResponsiveContainer,
   Cell,
 } from 'recharts';
-import { campaigns } from '@/lib/mockData';
-
-const chartData = campaigns.map((c) => ({
-  name: c.name.split('—')[0].trim().substring(0, 16) + (c.name.split('—')[0].trim().length > 16 ? '…' : ''),
-  revenue: c.revenue,
-  spend: c.spend,
-  roi: parseFloat((((c.revenue - c.spend) / c.spend) * 100).toFixed(1)),
-}));
+import EmptyState from '@/components/ui/EmptyState';
+import { BarChart2 } from 'lucide-react';
+import { useCampaigns } from './CampaignsProvider';
+import { computeROI } from '@/lib/metrics';
 
 const barColors = [
   'var(--chart-1)',
@@ -27,9 +23,9 @@ const barColors = [
   'var(--chart-4)',
   'var(--chart-5)',
   'var(--chart-6)',
-  'var(--chart-1)',
-  'var(--chart-2)',
 ];
+
+const MAX_BARS = 10; // cap for chart legibility + render cost
 
 function CustomTooltip({ active, payload, label }: {
   active?: boolean;
@@ -53,6 +49,33 @@ function CustomTooltip({ active, payload, label }: {
 }
 
 export default function CampaignPerformanceChart() {
+  const { campaigns, loading } = useCampaigns();
+
+  const chartData = useMemo(
+    () =>
+      [...campaigns]
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, MAX_BARS)
+        .map((c) => ({
+          name: c.campaign_name.length > 16 ? `${c.campaign_name.slice(0, 16)}…` : c.campaign_name,
+          revenue: c.revenue,
+          roi: computeROI(c.revenue, c.budget),
+        })),
+    [campaigns]
+  );
+
+  if (loading) return <div className="h-[280px] animate-pulse rounded-md bg-muted/60" />;
+
+  if (chartData.length === 0) {
+    return (
+      <EmptyState
+        icon={<BarChart2 size={24} />}
+        title="No data yet"
+        description="Upload campaigns to see revenue by campaign."
+      />
+    );
+  }
+
   return (
     <ResponsiveContainer width="100%" height={280}>
       <BarChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 40 }}>
@@ -70,7 +93,7 @@ export default function CampaignPerformanceChart() {
           tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
           axisLine={false}
           tickLine={false}
-          tickFormatter={(v) => v >= 100000 ? `₹${(v / 100000).toFixed(0)}L` : `₹${(v / 1000).toFixed(0)}K`}
+          tickFormatter={(v) => (v >= 100000 ? `₹${(v / 100000).toFixed(0)}L` : `₹${(v / 1000).toFixed(0)}K`)}
           width={52}
         />
         <Tooltip content={<CustomTooltip />} />
