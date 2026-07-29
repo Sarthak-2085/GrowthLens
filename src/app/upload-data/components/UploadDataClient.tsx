@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   UploadCloud,
-  FileText,
   CheckCircle2,
   XCircle,
   AlertCircle,
@@ -16,39 +15,23 @@ import {
   Info,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { uploadCampaignCsv, getDatasets, deleteDataset, ApiError, type Dataset, type RowError } from '@/lib/api';
 
-// Required CSV columns for validation
+// Columns the backend actually accepts (app/services/csv_service.py)
 const REQUIRED_COLUMNS = [
-  { key: 'col-campaign_name', name: 'campaign_name', description: 'Unique name for the campaign', example: 'Diwali Sale Q4 2025' },
-  { key: 'col-channel', name: 'channel', description: 'Marketing channel (Google Ads, Meta Ads, etc.)', example: 'Google Ads' },
+  { key: 'col-campaign', name: 'campaign', description: 'Unique name for the campaign', example: 'Diwali Sale Q4 2025' },
   { key: 'col-budget', name: 'budget', description: 'Total allocated budget in INR', example: '180000' },
-  { key: 'col-spend', name: 'spend', description: 'Actual amount spent in INR', example: '174500' },
-  { key: 'col-revenue', name: 'revenue', description: 'Attributed revenue in INR', example: '682000' },
   { key: 'col-clicks', name: 'clicks', description: 'Total number of ad clicks', example: '14820' },
   { key: 'col-impressions', name: 'impressions', description: 'Total ad impressions served', example: '312400' },
   { key: 'col-conversions', name: 'conversions', description: 'Total conversion events', example: '892' },
-  { key: 'col-start_date', name: 'start_date', description: 'Campaign start date (YYYY-MM-DD)', example: '2025-10-15' },
-  { key: 'col-status', name: 'status', description: 'Campaign status (active/paused/completed)', example: 'completed' },
+  { key: 'col-revenue', name: 'revenue', description: 'Attributed revenue in INR', example: '682000' },
 ];
 
-const VALID_CHANNELS = ['google ads', 'meta ads', 'instagram', 'email', 'youtube', 'linkedin'];
-const VALID_STATUSES = ['active', 'paused', 'completed', 'draft'];
-
-interface UploadHistory {
-  id: string;
-  filename: string;
-  uploadedAt: string;
-  rows: number;
-  status: 'success' | 'error' | 'processing';
-  errorMessage?: string;
-}
-
-const uploadHistory: UploadHistory[] = [
-  { id: 'upload-001', filename: 'q4_campaigns_2025.csv', uploadedAt: '22 Jul 2026, 14:30', rows: 8, status: 'success' },
-  { id: 'upload-002', filename: 'diwali_performance.csv', uploadedAt: '18 Jul 2026, 09:15', rows: 12, status: 'success' },
-  { id: 'upload-003', filename: 'meta_campaigns_dec.csv', uploadedAt: '15 Jul 2026, 16:42', rows: 5, status: 'error', errorMessage: 'Missing required column: revenue' },
-  { id: 'upload-004', filename: 'annual_report_2025.csv', uploadedAt: '10 Jul 2026, 11:08', rows: 24, status: 'success' },
-  { id: 'upload-005', filename: 'q3_google_ads.csv', uploadedAt: '05 Jul 2026, 08:55', rows: 6, status: 'success' },
+const OPTIONAL_COLUMNS = [
+  { key: 'col-channel', name: 'channel', description: 'Marketing channel — defaults to "Other" if omitted', example: 'Google Ads' },
+  { key: 'col-status', name: 'status', description: 'active/paused/completed/draft — defaults to "active"', example: 'completed' },
+  { key: 'col-start_date', name: 'start_date', description: 'Campaign start date (YYYY-MM-DD)', example: '2025-10-15' },
+  { key: 'col-end_date', name: 'end_date', description: 'Campaign end date (YYYY-MM-DD)', example: '2025-11-05' },
 ];
 
 type ValidationStatus = 'idle' | 'validating' | 'valid' | 'error';
@@ -57,19 +40,15 @@ interface ColumnValidation {
   key: string;
   name: string;
   present: boolean;
-}
-
-interface DataError {
-  row: number;
-  column: string;
-  message: string;
+  required: boolean;
 }
 
 interface ParsedRow {
   [key: string]: string;
 }
 
-// Real CSV parser
+// Lightweight client-side parse — just for column presence + a quick preview.
+// Real validation (types, ranges, row-level errors) happens server-side on upload.
 function parseCSV(text: string): { headers: string[]; rows: ParsedRow[] } {
   const lines = text.trim().split(/\r?\n/);
   if (lines.length < 2) return { headers: [], rows: [] };
@@ -89,57 +68,48 @@ function parseCSV(text: string): { headers: string[]; rows: ParsedRow[] } {
   return { headers, rows };
 }
 
-function validateRows(rows: ParsedRow[]): DataError[] {
-  const errors: DataError[] = [];
-  const numericCols = ['budget', 'spend', 'revenue', 'clicks', 'impressions', 'conversions'];
-
-  rows.slice(0, 50).forEach((row, i) => {
-    const rowNum = i + 2; // 1-indexed + header row
-
-    numericCols.forEach((col) => {
-      if (row[col] !== undefined) {
-        const val = parseFloat(row[col]);
-        if (isNaN(val) || val < 0) {
-          errors.push({ row: rowNum, column: col, message: `"${row[col]}" is not a valid positive number` });
-        }
-      }
-    });
-
-    if (row.channel && !VALID_CHANNELS.includes(row.channel.toLowerCase())) {
-      errors.push({ row: rowNum, column: 'channel', message: `"${row.channel}" is not a recognized channel` });
-    }
-
-    if (row.status && !VALID_STATUSES.includes(row.status.toLowerCase())) {
-      errors.push({ row: rowNum, column: 'status', message: `"${row.status}" must be active/paused/completed/draft` });
-    }
-
-    if (row.start_date && !/^\d{4}-\d{2}-\d{2}$/.test(row.start_date)) {
-      errors.push({ row: rowNum, column: 'start_date', message: `"${row.start_date}" must be YYYY-MM-DD format` });
-    }
-  });
-
-  return errors.slice(0, 10); // cap at 10 errors shown
-}
-
 export default function UploadDataClient() {
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [validationStatus, setValidationStatus] = useState<ValidationStatus>('idle');
   const [columnValidations, setColumnValidations] = useState<ColumnValidation[]>([]);
-  const [dataErrors, setDataErrors] = useState<DataError[]>([]);
   const [previewRows, setPreviewRows] = useState<ParsedRow[]>([]);
   const [previewHeaders, setPreviewHeaders] = useState<string[]>([]);
   const [showPreview, setShowPreview] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadComplete, setUploadComplete] = useState(false);
   const [totalRows, setTotalRows] = useState(0);
+
+  // Real results from the backend after an actual upload.
+  const [insertedCount, setInsertedCount] = useState(0);
+  const [skippedCount, setSkippedCount] = useState(0);
+  const [rowErrors, setRowErrors] = useState<RowError[]>([]);
+
+  // Real upload history from the backend.
+  const [datasets, setDatasets] = useState<Dataset[]>([]);
+  const [datasetsLoading, setDatasetsLoading] = useState(true);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const loadDatasets = useCallback(() => {
+    setDatasetsLoading(true);
+    getDatasets()
+      .then(setDatasets)
+      .catch(() => setDatasets([]))
+      .finally(() => setDatasetsLoading(false));
+  }, []);
+
+  useEffect(() => {
+    loadDatasets();
+  }, [loadDatasets]);
 
   const processCSV = useCallback((file: File) => {
     setValidationStatus('validating');
     setShowPreview(false);
     setUploadComplete(false);
-    setDataErrors([]);
+    setRowErrors([]);
+    setInsertedCount(0);
+    setSkippedCount(0);
 
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -158,46 +128,32 @@ export default function UploadDataClient() {
         return;
       }
 
-      // Column presence check
-      const colValidations = REQUIRED_COLUMNS.map((col) => ({
-        key: col.key,
-        name: col.name,
-        present: headers.includes(col.name),
-      }));
+      const colValidations: ColumnValidation[] = [
+        ...REQUIRED_COLUMNS.map((col) => ({ key: col.key, name: col.name, present: headers.includes(col.name), required: true })),
+        ...OPTIONAL_COLUMNS.map((col) => ({ key: col.key, name: col.name, present: headers.includes(col.name), required: false })),
+      ];
       setColumnValidations(colValidations);
 
-      const missingCols = colValidations.filter((c) => !c.present);
-
-      if (missingCols.length > 0) {
-        setValidationStatus('error');
-        toast.error(`Missing ${missingCols.length} required column${missingCols.length > 1 ? 's' : ''}`, {
-          description: missingCols.map((c) => c.name).join(', '),
-        });
-        return;
-      }
-
-      // Row-level validation
-      const rowErrors = validateRows(rows);
-      setDataErrors(rowErrors);
+      const missingRequired = colValidations.filter((c) => c.required && !c.present);
       setTotalRows(rows.length);
 
-      // Preview: first 5 rows, only required columns
-      const previewCols = REQUIRED_COLUMNS.map((c) => c.name);
+      const previewCols = colValidations.filter((c) => c.present).map((c) => c.name);
       setPreviewHeaders(previewCols);
       setPreviewRows(rows.slice(0, 5));
       setShowPreview(true);
 
-      if (rowErrors.length > 0) {
+      if (missingRequired.length > 0) {
         setValidationStatus('error');
-        toast.error(`${rowErrors.length} data error${rowErrors.length > 1 ? 's' : ''} found`, {
-          description: 'Fix the highlighted issues before uploading.',
+        toast.error(`Missing ${missingRequired.length} required column${missingRequired.length > 1 ? 's' : ''}`, {
+          description: missingRequired.map((c) => c.name).join(', '),
         });
-      } else {
-        setValidationStatus('valid');
-        toast.success(`File validated: ${file.name}`, {
-          description: `${rows.length} rows · ${REQUIRED_COLUMNS.length} required columns detected. Ready to upload.`,
-        });
+        return;
       }
+
+      setValidationStatus('valid');
+      toast.success(`File looks good: ${file.name}`, {
+        description: `${rows.length} rows detected. Click "Upload & Analyze" to send it to GrowthLens.`,
+      });
     };
 
     reader.onerror = () => {
@@ -215,9 +171,9 @@ export default function UploadDataClient() {
       });
       return;
     }
-    if (file.size > 10 * 1024 * 1024) {
+    if (file.size > 5 * 1024 * 1024) {
       toast.error('File too large', {
-        description: 'Maximum file size is 10MB. Split your dataset into smaller files.',
+        description: 'Maximum file size is 5MB. Split your dataset into smaller files.',
       });
       return;
     }
@@ -244,43 +200,74 @@ export default function UploadDataClient() {
     if (file) handleFileSelect(file);
   }, [handleFileSelect]);
 
-  const handleUpload = useCallback(() => {
+  const handleUpload = useCallback(async () => {
     if (!uploadedFile || validationStatus !== 'valid') return;
     setIsUploading(true);
-    setTimeout(() => {
-      setIsUploading(false);
+
+    try {
+      const result = await uploadCampaignCsv(uploadedFile);
+      setInsertedCount(result.inserted);
+      setSkippedCount(result.skipped);
+      setRowErrors(result.errors);
       setUploadComplete(true);
-      toast.success('Dataset uploaded successfully!', {
-        description: `${uploadedFile.name} is being processed. Dashboard will update shortly.`,
-      });
-    }, 2200);
-  }, [uploadedFile, validationStatus]);
+      loadDatasets();
+
+      if (result.inserted === 0) {
+        toast.error('Nothing was imported', {
+          description: 'Every row failed validation — check the errors below.',
+        });
+      } else {
+        toast.success('Dataset uploaded successfully!', {
+          description: `${result.inserted} row${result.inserted === 1 ? '' : 's'} imported${result.skipped ? `, ${result.skipped} skipped` : ''}.`,
+        });
+      }
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Upload failed. Please try again.';
+      toast.error('Upload failed', { description: message });
+      setValidationStatus('error');
+    } finally {
+      setIsUploading(false);
+    }
+  }, [uploadedFile, validationStatus, loadDatasets]);
 
   const handleClearFile = useCallback(() => {
     setUploadedFile(null);
     setValidationStatus('idle');
     setColumnValidations([]);
-    setDataErrors([]);
     setPreviewRows([]);
     setPreviewHeaders([]);
     setShowPreview(false);
     setUploadComplete(false);
     setTotalRows(0);
+    setInsertedCount(0);
+    setSkippedCount(0);
+    setRowErrors([]);
     if (fileInputRef.current) fileInputRef.current.value = '';
   }, []);
 
+  const handleDeleteDataset = useCallback(async (id: string, filename: string) => {
+    try {
+      await deleteDataset(id);
+      toast.success('Dataset removed', { description: filename });
+      loadDatasets();
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Could not remove dataset.';
+      toast.error('Delete failed', { description: message });
+    }
+  }, [loadDatasets]);
+
   const validCount = columnValidations.filter((c) => c.present).length;
-  const invalidCount = columnValidations.filter((c) => !c.present).length;
+  const invalidCount = columnValidations.filter((c) => c.required && !c.present).length;
 
   const handleDownloadSample = (e: React.MouseEvent) => {
     e.preventDefault();
-    const headers = REQUIRED_COLUMNS.map((c) => c.name).join(',');
+    const headers = [...REQUIRED_COLUMNS, ...OPTIONAL_COLUMNS].map((c) => c.name).join(',');
     const sampleRows = [
-      'Diwali Sale — Google Search,Google Ads,180000,174500,682000,14820,312400,892,2025-10-15,completed',
-      'Brand Awareness — Meta Reels,Meta Ads,95000,61200,198400,22100,890000,412,2025-12-01,active',
-      'New Year Offers — Instagram,Instagram,72000,48300,156800,18450,540000,318,2025-12-20,active',
-      'Re-engagement — Email Drip,Email,18000,12400,94200,8640,62000,284,2025-11-10,active',
-      'Product Demo — YouTube,YouTube,60000,42800,58200,5820,420000,89,2025-11-01,paused',
+      'Diwali Sale,180000,14820,312400,892,682000,Google Ads,completed,2025-10-15,2025-11-05',
+      'Brand Awareness,95000,22100,890000,412,198400,Meta Ads,active,2025-12-01,2026-01-31',
+      'New Year Offers,72000,18450,540000,318,156800,Instagram,active,2025-12-20,2026-01-15',
+      'Re-engagement Drip,18000,8640,62000,284,94200,Email,active,2025-11-10,2026-02-28',
+      'Product Demo,60000,5820,420000,89,58200,YouTube,paused,2025-11-01,2025-12-01',
     ];
     const csv = [headers, ...sampleRows].join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -341,12 +328,21 @@ export default function UploadDataClient() {
             <div className="flex flex-col items-center justify-center px-8 py-14 text-center">
               {uploadComplete ? (
                 <>
-                  <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-positive/15">
-                    <CheckCircle2 size={32} className="text-positive" />
+                  <div className={`mb-4 flex h-16 w-16 items-center justify-center rounded-2xl ${insertedCount > 0 ? 'bg-positive/15' : 'bg-negative/15'}`}>
+                    {insertedCount > 0 ? (
+                      <CheckCircle2 size={32} className="text-positive" />
+                    ) : (
+                      <XCircle size={32} className="text-negative" />
+                    )}
                   </div>
-                  <h3 className="text-base font-600 text-foreground mb-1">Upload Complete!</h3>
+                  <h3 className="text-base font-600 text-foreground mb-1">
+                    {insertedCount > 0 ? 'Upload Complete!' : 'Nothing imported'}
+                  </h3>
                   <p className="text-sm text-muted-foreground mb-1">{uploadedFile?.name}</p>
-                  <p className="text-xs text-positive">Processing in background — dashboard will update shortly.</p>
+                  <p className={`text-xs ${insertedCount > 0 ? 'text-positive' : 'text-negative'}`}>
+                    {insertedCount} row{insertedCount === 1 ? '' : 's'} imported
+                    {skippedCount > 0 ? ` · ${skippedCount} skipped` : ''}
+                  </p>
                 </>
               ) : uploadedFile ? (
                 <>
@@ -360,7 +356,7 @@ export default function UploadDataClient() {
                     )}
                   </div>
                   <h3 className="text-base font-600 text-foreground mb-1">
-                    {validationStatus === 'validating' ? 'Parsing CSV…' : validationStatus === 'valid' ? 'File validated' : 'Validation failed'}
+                    {validationStatus === 'validating' ? 'Parsing CSV…' : validationStatus === 'valid' ? 'File looks good' : 'Validation failed'}
                   </h3>
                   <p className="text-sm text-muted-foreground mb-0.5">{uploadedFile.name}</p>
                   <p className="text-xs text-muted-foreground">
@@ -381,7 +377,7 @@ export default function UploadDataClient() {
                   </p>
                   <div className="flex flex-wrap justify-center gap-2">
                     <span className="rounded-full border border-border bg-card px-3 py-1 text-xs text-muted-foreground">CSV only</span>
-                    <span className="rounded-full border border-border bg-card px-3 py-1 text-xs text-muted-foreground">Max 10MB</span>
+                    <span className="rounded-full border border-border bg-card px-3 py-1 text-xs text-muted-foreground">Max 5MB</span>
                     <span className="rounded-full border border-border bg-card px-3 py-1 text-xs text-muted-foreground">UTF-8 encoded</span>
                   </div>
                 </>
@@ -400,7 +396,7 @@ export default function UploadDataClient() {
                 {isUploading ? (
                   <>
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    <span>Processing…</span>
+                    <span>Uploading…</span>
                   </>
                 ) : (
                   <>
@@ -458,19 +454,23 @@ export default function UploadDataClient() {
                   <div
                     key={col.key}
                     className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-colors ${
-                      col.present ? 'border-positive/20 bg-positive/5' : 'border-negative/20 bg-negative/5'
+                      col.present ? 'border-positive/20 bg-positive/5' : col.required ? 'border-negative/20 bg-negative/5' : 'border-border bg-muted/20'
                     }`}
                   >
                     {col.present ? (
                       <CheckCircle2 size={14} className="text-positive flex-shrink-0" />
-                    ) : (
+                    ) : col.required ? (
                       <XCircle size={14} className="text-negative flex-shrink-0" />
+                    ) : (
+                      <Info size={14} className="text-muted-foreground flex-shrink-0" />
                     )}
-                    <span className={`text-xs font-mono font-500 ${col.present ? 'text-foreground' : 'text-negative'}`}>
+                    <span className={`text-xs font-mono font-500 ${col.present ? 'text-foreground' : col.required ? 'text-negative' : 'text-muted-foreground'}`}>
                       {col.name}
                     </span>
                     {!col.present && (
-                      <span className="ml-auto text-2xs text-negative">missing</span>
+                      <span className={`ml-auto text-2xs ${col.required ? 'text-negative' : 'text-muted-foreground'}`}>
+                        {col.required ? 'missing' : 'optional'}
+                      </span>
                     )}
                   </div>
                 ))}
@@ -478,22 +478,21 @@ export default function UploadDataClient() {
             </div>
           )}
 
-          {/* Data Errors */}
-          {dataErrors.length > 0 && (
+          {/* Row Errors — from the backend's actual validation, after upload */}
+          {rowErrors.length > 0 && (
             <div className="card-glass p-5 animate-slide-up border border-negative/20">
               <div className="mb-3 flex items-center gap-2">
                 <AlertCircle size={14} className="text-negative" />
-                <h3 className="text-sm font-600 text-negative">Data Errors ({dataErrors.length})</h3>
-                <span className="text-2xs text-muted-foreground">Fix these before uploading</span>
+                <h3 className="text-sm font-600 text-negative">Rows Skipped ({rowErrors.length})</h3>
+                <span className="text-2xs text-muted-foreground">The rest of the file was still imported</span>
               </div>
-              <div className="space-y-2">
-                {dataErrors.map((err, i) => (
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {rowErrors.map((err, i) => (
                   <div key={`err-${i}`} className="flex items-start gap-3 rounded-lg border border-negative/15 bg-negative/5 px-3 py-2.5">
                     <XCircle size={13} className="mt-0.5 flex-shrink-0 text-negative" />
                     <div>
                       <span className="text-xs font-600 text-negative">Row {err.row} · </span>
-                      <span className="text-xs font-mono text-negative">{err.column}</span>
-                      <span className="text-xs text-muted-foreground"> — {err.message}</span>
+                      <span className="text-xs text-muted-foreground">{err.reason}</span>
                     </div>
                   </div>
                 ))}
@@ -502,7 +501,7 @@ export default function UploadDataClient() {
           )}
 
           {/* Preview Table */}
-          {showPreview && validationStatus === 'valid' && (
+          {showPreview && validationStatus === 'valid' && !uploadComplete && (
             <div className="card-glass overflow-hidden animate-slide-up">
               <div className="flex items-center justify-between border-b border-border px-5 py-4">
                 <div className="flex items-center gap-2">
@@ -528,7 +527,7 @@ export default function UploadDataClient() {
                       <tr key={`preview-row-${rowIdx}`} className="hover:bg-white/3 transition-colors">
                         {previewHeaders.map((col) => {
                           const val = row[col] ?? '—';
-                          const isMonetary = ['budget', 'spend', 'revenue'].includes(col);
+                          const isMonetary = ['budget', 'revenue'].includes(col);
                           const isStatus = col === 'status';
                           return (
                             <td key={`cell-${rowIdx}-${col}`} className="px-3 py-2.5 text-muted-foreground whitespace-nowrap">
@@ -556,11 +555,11 @@ export default function UploadDataClient() {
 
         {/* Right: Required columns guide + upload history */}
         <div className="space-y-4">
-          {/* Required columns guide */}
+          {/* Columns guide */}
           <div className="card-glass p-5">
             <div className="mb-4 flex items-center gap-2">
               <Table2 size={15} className="text-muted-foreground" />
-              <h3 className="text-sm font-600 text-foreground">Required Columns</h3>
+              <h3 className="text-sm font-600 text-foreground">CSV Columns</h3>
             </div>
             <div className="space-y-3">
               {REQUIRED_COLUMNS.map((col) => (
@@ -573,37 +572,58 @@ export default function UploadDataClient() {
                   <p className="mt-0.5 text-2xs text-muted-foreground/70">e.g. <span className="font-mono">{col.example}</span></p>
                 </div>
               ))}
+              {OPTIONAL_COLUMNS.map((col) => (
+                <div key={col.key} className="border-b border-border/50 pb-3 last:border-0 last:pb-0">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <code className="text-xs font-mono font-600 text-muted-foreground">{col.name}</code>
+                    <span className="text-2xs text-muted-foreground bg-muted/50 rounded px-1.5 py-0.5">optional</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{col.description}</p>
+                  <p className="mt-0.5 text-2xs text-muted-foreground/70">e.g. <span className="font-mono">{col.example}</span></p>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Upload History */}
+          {/* Upload History — real datasets from the backend */}
           <div className="card-glass p-5">
             <div className="mb-4 flex items-center gap-2">
               <Clock size={15} className="text-muted-foreground" />
               <h3 className="text-sm font-600 text-foreground">Upload History</h3>
             </div>
             <div className="space-y-2">
-              {uploadHistory.map((upload) => (
-                <div
-                  key={upload.id}
-                  className="flex items-start gap-3 rounded-lg border border-border/50 bg-muted/20 px-3 py-3 transition-colors hover:bg-muted/40"
-                >
-                  <div className={`mt-0.5 flex-shrink-0 ${upload.status === 'success' ? 'text-positive' : upload.status === 'error' ? 'text-negative' : 'text-warning'}`}>
-                    {upload.status === 'success' ? <CheckCircle2 size={14} /> : upload.status === 'error' ? <XCircle size={14} /> : <AlertCircle size={14} />}
+              {datasetsLoading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <div key={`ds-skel-${i}`} className="h-14 animate-pulse rounded-lg bg-muted/40" />
+                ))
+              ) : datasets.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No uploads yet.</p>
+              ) : (
+                datasets.map((dataset) => (
+                  <div
+                    key={dataset.id}
+                    className="flex items-start gap-3 rounded-lg border border-border/50 bg-muted/20 px-3 py-3 transition-colors hover:bg-muted/40"
+                  >
+                    <div className="mt-0.5 flex-shrink-0 text-positive">
+                      <CheckCircle2 size={14} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-500 text-foreground truncate">{dataset.filename}</p>
+                      <p className="text-2xs text-muted-foreground mt-0.5">
+                        {new Date(dataset.uploaded_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                      <p className="text-2xs text-positive mt-0.5">{dataset.row_count} rows imported</p>
+                    </div>
+                    <button
+                      onClick={() => handleDeleteDataset(dataset.id, dataset.filename)}
+                      className="mt-0.5 flex-shrink-0 text-muted-foreground/50 transition-colors hover:text-negative"
+                      aria-label={`Delete ${dataset.filename}`}
+                    >
+                      <Trash2 size={13} />
+                    </button>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-500 text-foreground truncate">{upload.filename}</p>
-                    <p className="text-2xs text-muted-foreground mt-0.5">{upload.uploadedAt}</p>
-                    {upload.status === 'success' && (
-                      <p className="text-2xs text-positive mt-0.5">{upload.rows} rows imported</p>
-                    )}
-                    {upload.status === 'error' && upload.errorMessage && (
-                      <p className="text-2xs text-negative mt-0.5 leading-relaxed">{upload.errorMessage}</p>
-                    )}
-                  </div>
-                  <FileText size={13} className="mt-0.5 flex-shrink-0 text-muted-foreground/50" />
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
 
@@ -614,7 +634,7 @@ export default function UploadDataClient() {
               <div>
                 <p className="text-xs font-600 text-warning mb-1">INR Formatting Note</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  All monetary values (budget, spend, revenue) must be in INR without currency symbols. Use plain integers: <code className="font-mono text-foreground">180000</code> not <code className="font-mono">₹1,80,000</code>.
+                  Monetary values (budget, revenue) must be in INR without currency symbols. Use plain integers: <code className="font-mono text-foreground">180000</code> not <code className="font-mono">₹1,80,000</code>.
                 </p>
               </div>
             </div>

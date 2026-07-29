@@ -1,9 +1,14 @@
+'use client';
+
 import React from 'react';
 import TopCampaignsTable from './TopCampaignsTable';
 import AIRecommendationsPanel from './AIRecommendationsPanel';
 import { Zap, Trophy } from 'lucide-react';
+import { useAnalytics } from './AnalyticsProvider';
 
 export default function DashboardBottomSection() {
+  const { recommendations, loading } = useAnalytics();
+
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-5 xl:grid-cols-5 2xl:grid-cols-5">
       {/* Top Campaigns Table — 3 cols */}
@@ -31,7 +36,9 @@ export default function DashboardBottomSection() {
           </div>
           <div>
             <h2 className="text-base font-600 text-foreground">AI Recommendations</h2>
-            <p className="text-xs text-muted-foreground">5 actionable insights</p>
+            <p className="text-xs text-muted-foreground">
+              {loading ? 'Analyzing…' : `${recommendations.length} actionable insight${recommendations.length === 1 ? '' : 's'}`}
+            </p>
           </div>
         </div>
         <AIRecommendationsPanel />

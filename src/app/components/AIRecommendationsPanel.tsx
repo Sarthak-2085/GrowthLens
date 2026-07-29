@@ -1,13 +1,19 @@
 'use client';
 
 import React, { useState } from 'react';
-import { aiRecommendations } from '@/lib/mockData';
-import { TrendingUp, TrendingDown, Zap, AlertTriangle, ChevronDown, ChevronUp, ArrowRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, Zap, AlertTriangle, ChevronDown, ChevronUp, ArrowRight, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
-import Icon from '@/components/ui/AppIcon';
+import EmptyState from '@/components/ui/EmptyState';
+import { useAnalytics } from './AnalyticsProvider';
+import type { Recommendation } from '@/lib/api';
 
-
-const typeConfig = {
+const typeConfig: Record<Recommendation['type'], {
+  icon: typeof TrendingUp;
+  iconClass: string;
+  bgClass: string;
+  badgeClass: string;
+  label: string;
+}> = {
   increase: {
     icon: TrendingUp,
     iconClass: 'text-positive',
@@ -38,25 +44,56 @@ const typeConfig = {
   },
 };
 
-const priorityColors = {
+const priorityColors: Record<Recommendation['priority'], string> = {
   high: 'text-negative',
   medium: 'text-warning',
   low: 'text-muted-foreground',
 };
 
 export default function AIRecommendationsPanel() {
-  const [expanded, setExpanded] = useState<string | null>('rec-001');
+  const { recommendations, loading, error } = useAnalytics();
+  const [expanded, setExpanded] = useState<string | null>(null);
 
-  const handleAction = (recId: string, action: string) => {
-    // Backend integration point: POST /api/recommendations/{recId}/action
-    toast.success(`Action queued: ${action}`, {
-      description: 'Your budget change will be reflected in the next sync.',
+  const handleAction = (action: string) => {
+    // Backend action-execution endpoint (auto-apply budget changes) is a future phase.
+    toast.success(`Noted: ${action}`, {
+      description: 'Review and apply this change directly in your ad platform for now.',
     });
   };
 
+  if (loading) {
+    return (
+      <div className="space-y-3">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={`rec-skel-${i}`} className="h-16 animate-pulse rounded-xl bg-muted/60" />
+        ))}
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <EmptyState
+        icon={<AlertTriangle size={24} />}
+        title="Couldn't load recommendations"
+        description={error}
+      />
+    );
+  }
+
+  if (recommendations.length === 0) {
+    return (
+      <EmptyState
+        icon={<Sparkles size={24} />}
+        title="No recommendations yet"
+        description="Upload campaign data — once there's enough signal, insights will show up here."
+      />
+    );
+  }
+
   return (
     <div className="space-y-3">
-      {aiRecommendations.map((rec) => {
+      {recommendations.map((rec) => {
         const config = typeConfig[rec.type];
         const Icon = config.icon;
         const isExpanded = expanded === rec.id;
@@ -70,7 +107,7 @@ export default function AIRecommendationsPanel() {
               className="flex w-full items-start gap-3 text-left"
               onClick={() => setExpanded(isExpanded ? null : rec.id)}
             >
-              <div className={`mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-card/60`}>
+              <div className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-card/60">
                 <Icon size={15} className={config.iconClass} />
               </div>
               <div className="flex-1 min-w-0">
@@ -100,10 +137,10 @@ export default function AIRecommendationsPanel() {
                 <div className="flex flex-wrap items-center gap-3">
                   <div className="rounded-lg border border-border bg-card/60 px-3 py-1.5">
                     <span className="text-2xs text-muted-foreground">Potential impact: </span>
-                    <span className="text-xs font-600 text-positive font-mono">{rec.potentialImpact}</span>
+                    <span className="text-xs font-600 text-positive font-mono">{rec.potential_impact}</span>
                   </div>
                   <button
-                    onClick={() => handleAction(rec.id, rec.action)}
+                    onClick={() => handleAction(rec.action)}
                     className="flex items-center gap-1.5 rounded-lg bg-foreground/10 px-3 py-1.5 text-xs font-600 text-foreground transition-all duration-150 hover:bg-foreground/20 active:scale-95"
                   >
                     {rec.action}

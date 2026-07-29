@@ -40,6 +40,51 @@ export interface UploadResponse {
   errors: RowError[];
 }
 
+export interface CampaignMetrics {
+  id: number;
+  campaign_name: string;
+  channel: string;
+  budget: number;
+  revenue: number;
+  roi: number;
+  ctr: number;
+  cpc: number;
+  cpa: number;
+  cvr: number;
+  budget_efficiency: number;
+}
+
+export interface AnalyticsSummary {
+  total_campaigns: number;
+  total_budget: number;
+  total_revenue: number;
+  overall_roi: number;
+  overall_ctr: number;
+  overall_cpc: number;
+  overall_cpa: number;
+  overall_cvr: number;
+  best_campaign: CampaignMetrics | null;
+  worst_campaign: CampaignMetrics | null;
+  most_efficient_campaign: CampaignMetrics | null;
+  campaign_metrics: CampaignMetrics[];
+}
+
+export type RecommendationType = 'increase' | 'decrease' | 'optimize' | 'alert';
+export type RecommendationPriority = 'high' | 'medium' | 'low';
+
+export interface Recommendation {
+  id: string;
+  campaign_id: number;
+  campaign_name: string;
+  channel: string;
+  type: RecommendationType;
+  priority: RecommendationPriority;
+  headline: string;
+  detail: string;
+  potential_impact: string;
+  action: string;
+}
+
 export class ApiError extends Error {
   status?: number;
   constructor(message: string, status?: number) {
@@ -97,4 +142,14 @@ export function deleteDataset(id: string): Promise<void> {
 
 export function checkHealth(): Promise<{ status: string }> {
   return request<{ status: string }>('/api/health');
+}
+
+export function getAnalyticsSummary(datasetId?: string): Promise<AnalyticsSummary> {
+  const query = datasetId ? `?dataset_id=${encodeURIComponent(datasetId)}` : '';
+  return request<AnalyticsSummary>(`/api/analytics/summary${query}`);
+}
+
+export function getRecommendations(datasetId?: string): Promise<Recommendation[]> {
+  const query = datasetId ? `?dataset_id=${encodeURIComponent(datasetId)}` : '';
+  return request<Recommendation[]>(`/api/analytics/recommendations${query}`);
 }

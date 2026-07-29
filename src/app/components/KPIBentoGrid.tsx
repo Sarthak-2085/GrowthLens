@@ -13,12 +13,16 @@ import {
   BarChart2,
   UploadCloud,
   AlertCircle,
+  Crown,
+  Gauge,
 } from 'lucide-react';
 import { useCampaigns } from './CampaignsProvider';
+import { useAnalytics } from './AnalyticsProvider';
 import { computeROI, computeCTR, formatINR } from '@/lib/metrics';
 
 export default function KPIBentoGrid() {
   const { campaigns, loading, error } = useCampaigns();
+  const { summary } = useAnalytics();
 
   const stats = useMemo(() => {
     const totalBudget = campaigns.reduce((s, c) => s + c.budget, 0);
@@ -138,6 +142,24 @@ export default function KPIBentoGrid() {
         icon={<MousePointerClick size={20} />}
         variant="default"
       />
+      {summary?.best_campaign && (
+        <MetricCard
+          label="Best Campaign"
+          value={summary.best_campaign.campaign_name}
+          subValue={`+${summary.best_campaign.roi}% ROI · ${summary.best_campaign.channel}`}
+          icon={<Crown size={20} />}
+          variant="positive"
+        />
+      )}
+      {summary?.most_efficient_campaign && (
+        <MetricCard
+          label="Most Efficient"
+          value={`${summary.most_efficient_campaign.budget_efficiency}x`}
+          subValue={`${summary.most_efficient_campaign.campaign_name} · revenue per ₹ spent`}
+          icon={<Gauge size={20} />}
+          variant="accent"
+        />
+      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import React from 'react';
 import AppLayout from '@/components/AppLayout';
 import { CampaignsProvider } from './components/CampaignsProvider';
+import { AnalyticsProvider } from './components/AnalyticsProvider';
 import DashboardHeader from './components/DashboardHeader';
 import KPIBentoGrid from './components/KPIBentoGrid';
 import DashboardCharts from './components/DashboardCharts';
@@ -10,12 +11,14 @@ export default function DashboardPage() {
   return (
     <AppLayout currentPath="/">
       <CampaignsProvider>
-        <div className="space-y-6 animate-fade-in">
-          <DashboardHeader />
-          <KPIBentoGrid />
-          <DashboardCharts />
-          <DashboardBottomSection />
-        </div>
+        <AnalyticsProvider>
+          <div className="space-y-6 animate-fade-in">
+            <DashboardHeader />
+            <KPIBentoGrid />
+            <DashboardCharts />
+            <DashboardBottomSection />
+          </div>
+        </AnalyticsProvider>
       </CampaignsProvider>
     </AppLayout>
   );
