@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.database import init_db
-from app.routes import campaigns, health
+from app.routes import analytics, campaigns, health
 
 app = FastAPI(
     title=settings.app_name,
@@ -29,6 +29,7 @@ def on_startup() -> None:
 
 app.include_router(health.router, prefix=settings.api_prefix)
 app.include_router(campaigns.router, prefix=settings.api_prefix)
+app.include_router(analytics.router, prefix=settings.api_prefix)
 
 
 if __name__ == "__main__":
