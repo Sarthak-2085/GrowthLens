@@ -6,6 +6,7 @@ import DashboardHeader from './components/DashboardHeader';
 import KPIBentoGrid from './components/KPIBentoGrid';
 import DashboardCharts from './components/DashboardCharts';
 import DashboardBottomSection from './components/DashboardBottomSection';
+import CampaignSimulator from './components/CampaignSimulator';
 
 export default function DashboardPage() {
   return (
@@ -17,6 +18,7 @@ export default function DashboardPage() {
             <KPIBentoGrid />
             <DashboardCharts />
             <DashboardBottomSection />
+            <CampaignSimulator />
           </div>
         </AnalyticsProvider>
       </CampaignsProvider>

@@ -85,6 +85,33 @@ export interface Recommendation {
   action: string;
 }
 
+export type MLConfidence = 'low' | 'medium' | 'high';
+
+export interface MLStatus {
+  ready: boolean;
+  sample_size: number;
+  min_required: number;
+  message: string;
+}
+
+export interface PredictionRequest {
+  channel: string;
+  budget: number;
+  dataset_id?: string;
+}
+
+export interface PredictionResponse {
+  predicted_revenue: number;
+  predicted_conversions: number;
+  predicted_clicks: number;
+  predicted_roi: number;
+  predicted_cvr: number;
+  success_score: number;
+  confidence: MLConfidence;
+  r2_score: number | null;
+  sample_size: number;
+}
+
 export class ApiError extends Error {
   status?: number;
   constructor(message: string, status?: number) {
@@ -152,4 +179,17 @@ export function getAnalyticsSummary(datasetId?: string): Promise<AnalyticsSummar
 export function getRecommendations(datasetId?: string): Promise<Recommendation[]> {
   const query = datasetId ? `?dataset_id=${encodeURIComponent(datasetId)}` : '';
   return request<Recommendation[]>(`/api/analytics/recommendations${query}`);
+}
+
+export function getMLStatus(datasetId?: string): Promise<MLStatus> {
+  const query = datasetId ? `?dataset_id=${encodeURIComponent(datasetId)}` : '';
+  return request<MLStatus>(`/api/ml/status${query}`);
+}
+
+export function predictCampaignOutcome(payload: PredictionRequest): Promise<PredictionResponse> {
+  return request<PredictionResponse>('/api/ml/predict', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
 }
