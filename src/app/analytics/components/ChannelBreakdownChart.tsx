@@ -1,8 +1,16 @@
 'use client';
 
 import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,  } from 'recharts';
-import { channelBreakdown } from '@/lib/mockData';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+
+export interface ChannelBreakdownRow {
+  channel: string;
+  budget: number;
+  revenue: number;
+  roi: number;
+  conversions: number;
+  color: string;
+}
 
 function CustomTooltip({ active, payload, label }: {
   active?: boolean;
@@ -26,11 +34,11 @@ function CustomTooltip({ active, payload, label }: {
   );
 }
 
-export default function ChannelBreakdownChart() {
+export default function ChannelBreakdownChart({ data }: { data: ChannelBreakdownRow[] }) {
   return (
     <ResponsiveContainer width="100%" height={260}>
       <BarChart
-        data={channelBreakdown}
+        data={data}
         layout="vertical"
         margin={{ top: 4, right: 16, bottom: 4, left: 8 }}
         barSize={18}
@@ -54,7 +62,7 @@ export default function ChannelBreakdownChart() {
         />
         <Tooltip content={<CustomTooltip />} />
         <Bar dataKey="revenue" name="Revenue" radius={[0, 4, 4, 0]}>
-          {channelBreakdown.map((entry, index) => (
+          {data.map((entry, index) => (
             <Cell key={`ch-bar-${index}`} fill={entry.color} fillOpacity={0.85} />
           ))}
         </Bar>

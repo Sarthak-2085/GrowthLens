@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   ScatterChart,
   Scatter,
@@ -12,22 +12,23 @@ import {
   Cell,
   ReferenceLine,
 } from 'recharts';
-import { campaigns, computeROI, channelColors } from '@/lib/mockData';
+import type { Campaign } from '@/lib/api';
+import { computeROI, colorForChannel } from '@/lib/metrics';
 
-const scatterData = campaigns.map((c) => ({
-  id: c.id,
-  name: c.name,
-  channel: c.channel,
-  spend: c.spend,
-  roi: computeROI(c.revenue, c.spend),
-  revenue: c.revenue,
-  conversions: c.conversions,
-  color: channelColors[c.channel] || 'var(--muted-foreground)',
-}));
+interface ScatterPoint {
+  id: number;
+  name: string;
+  channel: string;
+  budget: number;
+  roi: number;
+  revenue: number;
+  conversions: number;
+  color: string;
+}
 
 function CustomTooltip({ active, payload }: {
   active?: boolean;
-  payload?: Array<{ payload: typeof scatterData[0] }>;
+  payload?: Array<{ payload: ScatterPoint }>;
 }) {
   if (!active || !payload || payload.length === 0) return null;
   const d = payload[0].payload;
@@ -36,8 +37,8 @@ function CustomTooltip({ active, payload }: {
       <p className="mb-2 text-xs font-600 text-foreground leading-snug">{d.name}</p>
       <div className="space-y-1">
         <div className="flex justify-between gap-4 text-xs">
-          <span className="text-muted-foreground">Spend</span>
-          <span className="font-mono font-600 text-foreground">₹{d.spend.toLocaleString('en-IN')}</span>
+          <span className="text-muted-foreground">Budget</span>
+          <span className="font-mono font-600 text-foreground">₹{d.budget.toLocaleString('en-IN')}</span>
         </div>
         <div className="flex justify-between gap-4 text-xs">
           <span className="text-muted-foreground">ROI</span>
@@ -56,20 +57,34 @@ function CustomTooltip({ active, payload }: {
   );
 }
 
-export default function ScatterPlotChart() {
+export default function ScatterPlotChart({ campaigns }: { campaigns: Campaign[] }) {
+  const scatterData = useMemo<ScatterPoint[]>(() => {
+    const channels = Array.from(new Set(campaigns.map((c) => c.channel)));
+    return campaigns.map((c) => ({
+      id: c.id,
+      name: c.campaign_name,
+      channel: c.channel,
+      budget: c.budget,
+      roi: computeROI(c.revenue, c.budget),
+      revenue: c.revenue,
+      conversions: c.conversions,
+      color: colorForChannel(c.channel, channels),
+    }));
+  }, [campaigns]);
+
   return (
     <ResponsiveContainer width="100%" height={320}>
       <ScatterChart margin={{ top: 16, right: 16, bottom: 16, left: 0 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
         <XAxis
           type="number"
-          dataKey="spend"
-          name="Ad Spend"
+          dataKey="budget"
+          name="Budget"
           tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
           axisLine={false}
           tickLine={false}
           tickFormatter={(v) => v >= 100000 ? `₹${(v / 100000).toFixed(0)}L` : `₹${(v / 1000).toFixed(0)}K`}
-          label={{ value: 'Ad Spend (₹)', position: 'insideBottom', offset: -8, fill: 'var(--muted-foreground)', fontSize: 11 }}
+          label={{ value: 'Budget (₹)', position: 'insideBottom', offset: -8, fill: 'var(--muted-foreground)', fontSize: 11 }}
         />
         <YAxis
           type="number"

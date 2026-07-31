@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   LineChart,
   Line,
@@ -11,13 +11,8 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
-import { campaigns, computeCTR, computeCVR } from '@/lib/mockData';
-
-const ctrCvrData = campaigns.map((c) => ({
-  name: c.name.split('—')[0].trim().substring(0, 14),
-  ctr: computeCTR(c.clicks, c.impressions),
-  cvr: computeCVR(c.conversions, c.clicks),
-}));
+import type { Campaign } from '@/lib/api';
+import { computeCTR, computeCVR } from '@/lib/metrics';
 
 function CustomTooltip({ active, payload, label }: {
   active?: boolean;
@@ -39,7 +34,17 @@ function CustomTooltip({ active, payload, label }: {
   );
 }
 
-export default function CTRCVRChart() {
+export default function CTRCVRChart({ campaigns }: { campaigns: Campaign[] }) {
+  const ctrCvrData = useMemo(
+    () =>
+      campaigns.map((c) => ({
+        name: c.campaign_name.length > 14 ? `${c.campaign_name.slice(0, 14)}…` : c.campaign_name,
+        ctr: computeCTR(c.clicks, c.impressions),
+        cvr: computeCVR(c.conversions, c.clicks),
+      })),
+    [campaigns]
+  );
+
   return (
     <ResponsiveContainer width="100%" height={260}>
       <LineChart data={ctrCvrData} margin={{ top: 8, right: 16, bottom: 40, left: 0 }}>

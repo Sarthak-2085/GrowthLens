@@ -28,8 +28,6 @@ const navItems: NavItem[] = [
     label: 'Analytics',
     href: '/analytics',
     icon: BarChart3,
-    badge: '8',
-    badgeVariant: 'primary',
   },
   {
     id: 'nav-insights',
