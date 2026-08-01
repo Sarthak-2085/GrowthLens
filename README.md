@@ -1,4 +1,4 @@
-# 🚀 GrowthLens
+#  GrowthLens
 
 > AI-Powered Marketing Decision Intelligence Platform
 
