@@ -150,7 +150,7 @@ export default function CampaignInsightsClient() {
       month: pt.month,
       revenue: Math.round(base * (0.6 + Math.random() * 0.8 + i * 0.05)),
     }));
-  }, [selected.id]);
+  }, [selected.id, selected.revenue]);
 
   return (
     <div className="space-y-6 animate-fade-in">

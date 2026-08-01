@@ -548,15 +548,6 @@ export default function AnalyticsClient() {
                 ).map((col) => (
                   <th
                     key={`th-${col.field}`}
-                    onClick={() => handleSort(col.field)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        handleSort(col.field);
-                      }
-                    }}
-                    role="button"
-                    tabIndex={0}
                     aria-sort={
                       sortField === col.field
                         ? sortDir === 'asc'
@@ -564,20 +555,16 @@ export default function AnalyticsClient() {
                           : 'descending'
                         : 'none'
                     }
-                    className={`
-                      cursor-pointer select-none px-4 py-3
-                      text-xs font-600 uppercase tracking-wider text-muted-foreground
-                      transition-colors hover:text-foreground
-                      focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:-outline-offset-2
-                      ${col.align === 'right' ? 'text-right' : 'text-left'}
-                    `}
+                    className={`px-4 py-3 text-xs font-600 uppercase tracking-wider text-muted-foreground ${col.align === 'right' ? 'text-right' : 'text-left'}`}
                   >
-                    <div
-                      className={`flex items-center gap-1 ${col.align === 'right' ? 'justify-end' : ''}`}
+                    <button
+                      type="button"
+                      onClick={() => handleSort(col.field)}
+                      className={`flex w-full items-center gap-1 select-none transition-colors hover:text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary focus-visible:-outline-offset-2 ${col.align === 'right' ? 'justify-end' : ''}`}
                     >
                       {col.label}
                       <SortIcon field={col.field} />
-                    </div>
+                    </button>
                   </th>
                 ))}
               </tr>

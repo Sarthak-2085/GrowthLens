@@ -1,15 +1,7 @@
 import React from 'react';
 
 type StatusType =
-  | 'active'
-  | 'paused'
-  | 'completed'
-  | 'draft'
-  | 'archived'
-  | 'high'
-  | 'medium'
-  | 'low'
-  | 'critical';
+  'active' | 'paused' | 'completed' | 'draft' | 'archived' | 'high' | 'medium' | 'low' | 'critical';
 
 interface StatusBadgeProps {
   status: StatusType;

@@ -14,7 +14,6 @@ import {
   Lightbulb,
   FileBarChart,
 } from 'lucide-react';
-import Icon from '@/components/ui/AppIcon';
 
 interface NavItem {
   id: string;
