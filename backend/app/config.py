@@ -11,15 +11,20 @@ class Settings(BaseSettings):
     app_name: str = "GrowthLens API"
     api_prefix: str = "/api"
     port: int = 8001
-    debug: bool = True
+    # Default to False (production-safe). Local dev sets DEBUG=True in .env.
+    debug: bool = False
 
     # Relative to backend/ root
     database_path: str = "data/growthlens.db"
 
-    cors_origins: list[str] = [
-        "http://localhost:4028",
-        "http://127.0.0.1:4028",
-    ]
+    # Comma-separated string, not a JSON array — much easier to set correctly
+    # in Render's env var UI than list-typed pydantic-settings fields, which
+    # expect JSON and are a common source of "CORS blocked" deploy bugs.
+    cors_origins: str = "http://localhost:4028,http://127.0.0.1:4028"
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
 
 settings = Settings()

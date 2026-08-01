@@ -30,6 +30,12 @@ export const metadata: Metadata = {
   icons: {
     icon: [{ url: '/favicon.ico', type: 'image/x-icon' }],
   },
+  // No authentication exists yet — this dashboard shows real uploaded
+  // business data, so it must not be indexed or crawled until that changes.
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default function RootLayout({

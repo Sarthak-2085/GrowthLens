@@ -39,7 +39,7 @@ class Campaign(Base):
     conversions: Mapped[int] = mapped_column(Integer)
     revenue: Mapped[float] = mapped_column(Float)
 
-    channel: Mapped[str] = mapped_column(String, default="Other", server_default="Other")
+    channel: Mapped[str] = mapped_column(String, default="Other", server_default="Other", index=True)
     status: Mapped[str] = mapped_column(String, default="active", server_default="active", index=True)
     start_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     end_date: Mapped[date | None] = mapped_column(Date, nullable=True)
