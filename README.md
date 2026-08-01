@@ -1,72 +1,284 @@
-# GrowthLens — Frontend
+# 🚀 GrowthLens
 
-Next.js 15 (App Router) + TypeScript + Tailwind CSS dashboard for GrowthLens,
-an AI-powered marketing decision intelligence platform. Talks to the
-[FastAPI backend](../backend/README.md) over a REST API — no data lives in
-this app itself.
+> AI-Powered Marketing Decision Intelligence Platform
 
-## Local setup
+GrowthLens is a full-stack AI-powered marketing analytics platform that transforms raw campaign data into actionable business insights. Instead of simply displaying charts, it explains campaign performance, recommends optimization strategies, and predicts future outcomes using machine learning.
+
+---
+
+## 🌐 Live Demo
+
+https://growth-lens-psi.vercel.app/
+
+---
+
+## ✨ Features
+
+### 📊 Interactive Dashboard
+- Live KPI dashboard
+- Revenue, ROI & performance tracking
+- Dynamic charts
+- Campaign overview table
+
+### 📁 CSV Campaign Upload
+- Upload marketing campaign datasets
+- Automatic validation
+- Dataset management
+- Persistent storage (SQLite)
+
+### 📈 Analytics Engine
+Automatically calculates:
+
+- ROI
+- CTR
+- Revenue
+- Profit
+- Budget Efficiency
+
+Portfolio-level insights include:
+
+- Best Campaign
+- Worst Campaign
+- Top / Bottom Performers
+- Highest / Lowest ROI
+
+---
+
+### 🤖 AI Recommendation Engine
+
+Rule-based recommendation system that suggests actions such as:
+
+- Scale campaign
+- Pause campaign
+- Increase budget
+- Reduce budget
+- Improve CTR
+- Improve Conversion Rate
+
+Each recommendation is prioritized based on campaign performance.
+
+---
+
+### 🧠 Machine Learning Campaign Simulator
+
+Uses Ridge Regression to predict campaign performance before spending money.
+
+Predicts:
+
+- Revenue
+- Clicks
+- Conversions
+- ROI
+- CVR
+- Success Score
+
+Includes confidence estimation based on available training data.
+
+---
+
+### 📑 Reports
+
+Generate:
+
+- CSV Reports
+- PDF Reports
+
+Includes:
+
+- KPI Summary
+- Revenue Trends
+- Channel Performance
+- AI Recommendations
+
+---
+
+### 🔍 Campaign Insights
+
+Per-campaign performance dashboard including:
+
+- ROI
+- CTR
+- CPC
+- CPA
+- CVR
+- Revenue
+- Profit
+- AI Recommendations
+
+---
+
+## 🛠 Tech Stack
+
+### Frontend
+
+- Next.js
+- React
+- TypeScript
+- Tailwind CSS
+- Recharts
+
+### Backend
+
+- FastAPI
+- SQLAlchemy
+- SQLite
+- Pandas
+- Scikit-learn
+
+### Deployment
+
+- Vercel
+- Render
+
+---
+
+## 📂 Project Structure
+
+```
+GrowthLens
+│
+├── backend/
+│   ├── app/
+│   ├── database/
+│   ├── services/
+│   ├── models/
+│   └── routers/
+│
+├── src/
+│   ├── app/
+│   ├── components/
+│   ├── lib/
+│   └── providers/
+│
+└── public/
+```
+
+---
+
+## 🚀 Getting Started
+
+### Clone
+
+```bash
+git clone https://github.com/Sarthak-2085/GrowthLens.git
+cd GrowthLens
+```
+---
+
+### Backend
+
+```bash
+cd backend
+
+python -m venv .venv
+
+# Windows
+.venv\Scripts\activate
+
+pip install -r requirements.txt
+
+uvicorn app.main:app --reload
+```
+
+Backend runs on
+
+```
+http://localhost:8001
+```
+
+---
+
+### Frontend
+
 ```bash
 npm install
-cp .env .env.local        # or edit .env directly for local dev
+
 npm run dev
 ```
-Open [http://localhost:4028](http://localhost:4028). Requires the backend
-running at the URL set in `NEXT_PUBLIC_API_URL` (defaults to
-`http://localhost:8001`) — most pages will show an error/empty state without it.
 
-## Environment variables
-| Variable | Local dev | Production (Vercel) |
-|---|---|---|
-| `NEXT_PUBLIC_API_URL` | `http://localhost:8001` | Your deployed Render backend URL |
+Frontend runs on
 
-`NEXT_PUBLIC_*` vars are public by Next.js convention (bundled into client
-JS) — fine here since it's just a URL, not a secret.
-
-## Project structure
 ```
-src/
-  app/
-    page.tsx                  Dashboard (KPIs, charts, recommendations, simulator)
-    analytics/                 Full campaign table: search/filter/sort/pagination
-    upload-data/                 CSV upload + validation UI
-    reports/                      PDF (browser print) + CSV export
-    campaign-insights/              ⚠️ still mock data, not yet wired to the backend
-    components/                       Shared dashboard components + data providers
-      CampaignsProvider.tsx            Fetches /api/campaigns once, shares via context
-      AnalyticsProvider.tsx             Fetches analytics summary + recommendations once
-    error.tsx                             App-wide error boundary
-    not-found.tsx                          404 page
-  lib/
-    api.ts                                    Typed fetch client for every backend endpoint
-    metrics.ts                                 ROI/CTR/CVR/CPC/CPA calculations, formatting
-  components/ui/                                Design system primitives (MetricCard, EmptyState, etc.)
+http://localhost:4028
 ```
 
-## Data flow
-Each page that needs live data wraps itself in `CampaignsProvider` (and
-`AnalyticsProvider` where relevant) in its own `page.tsx` — there's no global
-provider in the root layout. This means each page fetches fresh on
-navigation rather than sharing stale state, which matters more than the
-extra request at this data scale.
+---
 
-## Known gaps
-- **`campaign-insights` page is still 100% mock data** — never wired to the
-  real backend. Every other page (`/`, `/analytics`, `/upload-data`,
-  `/reports`) is real.
-- **No authentication** — anything deployed here is publicly readable.
-  `robots: noindex` is set so it won't be search-indexed, but that's not
-  security.
-- **CSV column matching is exact** (case-insensitive) — a file with `Cost`
-  instead of `budget` won't be recognized. A column-mapping UI would fix
-  this; not yet built.
+## 📡 API Endpoints
 
-## Scripts
-- `npm run dev` — dev server, port 4028
-- `npm run build` — production build
-- `npm run lint` — ESLint (flat config in `eslint.config.mjs`)
+### Health
 
-## Deployment (Vercel)
-- Root directory: `GrowthLens/`
-- Env var: `NEXT_PUBLIC_API_URL=https://your-backend.onrender.com`
-- Framework preset: Next.js (auto-detected)
+```
+GET /api/health
+```
+
+### Upload
+
+```
+POST /api/upload
+```
+
+### Analytics
+
+```
+GET /api/analytics/summary
+
+GET /api/analytics/recommendations
+```
+
+### Machine Learning
+
+```
+GET /api/ml/status
+
+POST /api/ml/predict
+```
+
+---
+## 📸 Screenshots
+
+### Dashboard
+![Dashboard](screenshots/dashboard.png)
+
+### Analytics
+![Analytics](screenshots/analytics.png)
+
+### Campaign Insights
+![Campaign Insights](screenshots/campaign-insights.png)
+
+### ML Simulator
+![ML Simulator](screenshots/simulator.png)
+
+---
+
+## 🎯 Future Improvements
+
+- User Authentication
+- Multi-user Workspaces
+- Persistent Cloud Database
+- AI Chat Assistant
+- Real-time Data Integrations
+- Custom Dashboards
+- Advanced Forecasting Models
+
+---
+
+## ⚠️ Known Limitations
+
+- Authentication is not implemented.
+- SQLite on Render Free uses ephemeral storage, so uploaded demo data may not persist across redeployments.
+- Designed as a portfolio/demo application.
+
+---
+
+## 👨‍💻 Author
+
+**Sarthak**
+
+Built as a portfolio project demonstrating full-stack development, analytics, machine learning, and AI-powered decision support.
+
+---
+
+## 📄 License
+
+MIT License
