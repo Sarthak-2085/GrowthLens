@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo } from 'react';
+import Link from 'next/link';
 import MetricCard from '@/components/ui/MetricCard';
 import { KPICardSkeleton } from '@/components/ui/LoadingSkeleton';
 import EmptyState from '@/components/ui/EmptyState';
@@ -82,12 +83,12 @@ export default function KPIBentoGrid() {
           title="No campaigns yet"
           description="Upload a CSV to see your KPIs, charts, and campaign table populate here."
           action={
-            <a
+            <Link
               href="/upload-data"
               className="rounded-lg bg-primary px-4 py-2 text-xs font-600 text-primary-foreground transition-all duration-150 hover:bg-primary/90 active:scale-95"
             >
               Upload CSV
-            </a>
+            </Link>
           }
         />
       </div>

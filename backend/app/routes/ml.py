@@ -28,9 +28,13 @@ def ml_status(dataset_id: str | None = Query(None), db: Session = Depends(get_db
     ready = n >= MIN_ROWS_FOR_PREDICTION
 
     if not ready:
-        message = f"Upload at least {MIN_ROWS_FOR_PREDICTION} campaigns to unlock predictions (currently {n})."
+        message = (
+            f"Upload at least {MIN_ROWS_FOR_PREDICTION} campaigns to unlock predictions (currently {n})."
+        )
     elif n < MIN_ROWS_FOR_CV:
-        message = f"{n} campaigns available — predictions will be low-confidence until you have {MIN_ROWS_FOR_CV}+."
+        message = (
+            f"{n} campaigns available — predictions will be low-confidence until you have {MIN_ROWS_FOR_CV}+."
+        )
     else:
         message = f"{n} campaigns available — enough data for a reliable prediction."
 

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import React, { useMemo } from 'react';
 import { Activity, RefreshCw } from 'lucide-react';
 import { useCampaigns } from './CampaignsProvider';
@@ -31,7 +32,9 @@ export default function DashboardHeader() {
         </div>
         <p className="text-sm text-muted-foreground">
           {campaigns.length} campaign{campaigns.length === 1 ? '' : 's'}
-          {summary.channelCount > 0 ? ` across ${summary.channelCount} channel${summary.channelCount === 1 ? '' : 's'}` : ''}
+          {summary.channelCount > 0
+            ? ` across ${summary.channelCount} channel${summary.channelCount === 1 ? '' : 's'}`
+            : ''}
         </p>
       </div>
 
@@ -50,12 +53,12 @@ export default function DashboardHeader() {
           <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
           Refresh
         </button>
-        <a
+        <Link
           href="/upload-data"
           className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-600 text-primary-foreground transition-all duration-150 hover:bg-primary/90 active:scale-95"
         >
           Upload CSV
-        </a>
+        </Link>
       </div>
     </div>
   );

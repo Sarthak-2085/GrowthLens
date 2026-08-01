@@ -2,7 +2,20 @@
 
 import React, { useState, useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import { campaigns, aiRecommendations, revenueTrend, computeROI, computeCTR, computeCVR, computeCPC, computeCPA, formatINR, channelColors, type Campaign, type AIRecommendation,  } from '@/lib/mockData';
+import {
+  campaigns,
+  aiRecommendations,
+  revenueTrend,
+  computeROI,
+  computeCTR,
+  computeCVR,
+  computeCPC,
+  computeCPA,
+  formatINR,
+  channelColors,
+  type Campaign,
+  type AIRecommendation,
+} from '@/lib/mockData';
 import StatusBadge from '@/components/ui/StatusBadge';
 
 import {
@@ -107,15 +120,16 @@ export default function CampaignInsightsClient() {
   const [selectedId, setSelectedId] = useState<string>(campaigns[0].id);
   const [expandedRec, setExpandedRec] = useState<string | null>(null);
 
-  const enriched = useMemo<EnrichedCampaign[]>(() =>
-    campaigns.map((c) => ({
-      ...c,
-      roi: computeROI(c.revenue, c.spend),
-      ctr: computeCTR(c.clicks, c.impressions),
-      cvr: computeCVR(c.conversions, c.clicks),
-      cpc: computeCPC(c.spend, c.clicks),
-      cpa: computeCPA(c.spend, c.conversions),
-    })),
+  const enriched = useMemo<EnrichedCampaign[]>(
+    () =>
+      campaigns.map((c) => ({
+        ...c,
+        roi: computeROI(c.revenue, c.spend),
+        ctr: computeCTR(c.clicks, c.impressions),
+        cvr: computeCVR(c.conversions, c.clicks),
+        cpc: computeCPC(c.spend, c.clicks),
+        cpa: computeCPA(c.spend, c.conversions),
+      })),
     []
   );
 
@@ -166,7 +180,10 @@ export default function CampaignInsightsClient() {
             return (
               <button
                 key={c.id}
-                onClick={() => { setSelectedId(c.id); setExpandedRec(null); }}
+                onClick={() => {
+                  setSelectedId(c.id);
+                  setExpandedRec(null);
+                }}
                 className={`w-full rounded-xl border p-3.5 text-left transition-all duration-150 ${
                   isActive
                     ? 'border-primary/40 bg-primary/8 shadow-sm'
@@ -174,7 +191,9 @@ export default function CampaignInsightsClient() {
                 }`}
               >
                 <div className="flex items-start justify-between gap-2 mb-1.5">
-                  <p className="text-xs font-600 text-foreground leading-snug line-clamp-2">{c.name}</p>
+                  <p className="text-xs font-600 text-foreground leading-snug line-clamp-2">
+                    {c.name}
+                  </p>
                   <span
                     className="flex-shrink-0 h-2 w-2 rounded-full mt-1"
                     style={{ background: channelColors[c.channel] }}
@@ -211,7 +230,9 @@ export default function CampaignInsightsClient() {
                   <Layers size={20} style={{ color: channelColor }} />
                 </div>
                 <div>
-                  <h2 className="text-base font-700 text-foreground leading-snug">{selected.name}</h2>
+                  <h2 className="text-base font-700 text-foreground leading-snug">
+                    {selected.name}
+                  </h2>
                   <div className="mt-1.5 flex flex-wrap items-center gap-2">
                     <span
                       className="rounded-full px-2.5 py-0.5 text-2xs font-600"
@@ -244,7 +265,9 @@ export default function CampaignInsightsClient() {
                 <span className="text-xs text-muted-foreground">Budget Utilization</span>
                 <span className="text-xs font-600 font-mono text-foreground">
                   {formatINR(selected.spend, true)} / {formatINR(selected.budget, true)}
-                  <span className="ml-1.5 text-muted-foreground">({budgetUtilization.toFixed(0)}%)</span>
+                  <span className="ml-1.5 text-muted-foreground">
+                    ({budgetUtilization.toFixed(0)}%)
+                  </span>
                 </span>
               </div>
               <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
@@ -252,7 +275,12 @@ export default function CampaignInsightsClient() {
                   className="h-full rounded-full transition-all duration-700"
                   style={{
                     width: `${Math.min(100, budgetUtilization)}%`,
-                    background: budgetUtilization > 95 ? '#ef4444' : budgetUtilization > 80 ? '#f59e0b' : channelColor,
+                    background:
+                      budgetUtilization > 95
+                        ? '#ef4444'
+                        : budgetUtilization > 80
+                          ? '#f59e0b'
+                          : channelColor,
                   }}
                 />
               </div>
@@ -262,21 +290,61 @@ export default function CampaignInsightsClient() {
           {/* KPI Grid */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
             {[
-              { label: 'ROI', value: `${selected.roi > 0 ? '+' : ''}${selected.roi}%`, icon: TrendingUp, color: selected.roi > 0 ? 'text-positive' : 'text-negative', mono: true },
-              { label: 'Revenue', value: formatINR(selected.revenue, true), icon: DollarSign, color: 'text-foreground', mono: true },
-              { label: 'CTR', value: `${selected.ctr}%`, icon: MousePointerClick, color: 'text-primary', mono: true },
-              { label: 'CVR', value: `${selected.cvr}%`, icon: Target, color: 'text-primary', mono: true },
-              { label: 'CPC', value: `₹${selected.cpc}`, icon: BarChart2, color: 'text-foreground', mono: true },
-              { label: 'CPA', value: `₹${selected.cpa}`, icon: Users, color: 'text-foreground', mono: true },
+              {
+                label: 'ROI',
+                value: `${selected.roi > 0 ? '+' : ''}${selected.roi}%`,
+                icon: TrendingUp,
+                color: selected.roi > 0 ? 'text-positive' : 'text-negative',
+                mono: true,
+              },
+              {
+                label: 'Revenue',
+                value: formatINR(selected.revenue, true),
+                icon: DollarSign,
+                color: 'text-foreground',
+                mono: true,
+              },
+              {
+                label: 'CTR',
+                value: `${selected.ctr}%`,
+                icon: MousePointerClick,
+                color: 'text-primary',
+                mono: true,
+              },
+              {
+                label: 'CVR',
+                value: `${selected.cvr}%`,
+                icon: Target,
+                color: 'text-primary',
+                mono: true,
+              },
+              {
+                label: 'CPC',
+                value: `₹${selected.cpc}`,
+                icon: BarChart2,
+                color: 'text-foreground',
+                mono: true,
+              },
+              {
+                label: 'CPA',
+                value: `₹${selected.cpa}`,
+                icon: Users,
+                color: 'text-foreground',
+                mono: true,
+              },
             ].map((kpi) => {
               const KpiIcon = kpi.icon;
               return (
                 <div key={kpi.label} className="card-glass p-3.5">
                   <div className="flex items-center gap-1.5 mb-2">
                     <KpiIcon size={12} className="text-muted-foreground" />
-                    <span className="text-2xs text-muted-foreground uppercase tracking-wider">{kpi.label}</span>
+                    <span className="text-2xs text-muted-foreground uppercase tracking-wider">
+                      {kpi.label}
+                    </span>
                   </div>
-                  <p className={`text-base font-700 font-mono tabular-nums ${kpi.color}`}>{kpi.value}</p>
+                  <p className={`text-base font-700 font-mono tabular-nums ${kpi.color}`}>
+                    {kpi.value}
+                  </p>
                 </div>
               );
             })}
@@ -293,16 +361,41 @@ export default function CampaignInsightsClient() {
               <div className="space-y-3">
                 {[
                   { label: 'Total Budget', value: formatINR(selected.budget), sub: 'allocated' },
-                  { label: 'Actual Spend', value: formatINR(selected.spend), sub: `${budgetUtilization.toFixed(1)}% used` },
-                  { label: 'Revenue Generated', value: formatINR(selected.revenue), sub: 'attributed' },
-                  { label: 'Total Clicks', value: selected.clicks.toLocaleString('en-IN'), sub: `${selected.ctr}% CTR` },
-                  { label: 'Impressions', value: selected.impressions.toLocaleString('en-IN'), sub: 'total served' },
-                  { label: 'Conversions', value: selected.conversions.toLocaleString('en-IN'), sub: `${selected.cvr}% CVR` },
+                  {
+                    label: 'Actual Spend',
+                    value: formatINR(selected.spend),
+                    sub: `${budgetUtilization.toFixed(1)}% used`,
+                  },
+                  {
+                    label: 'Revenue Generated',
+                    value: formatINR(selected.revenue),
+                    sub: 'attributed',
+                  },
+                  {
+                    label: 'Total Clicks',
+                    value: selected.clicks.toLocaleString('en-IN'),
+                    sub: `${selected.ctr}% CTR`,
+                  },
+                  {
+                    label: 'Impressions',
+                    value: selected.impressions.toLocaleString('en-IN'),
+                    sub: 'total served',
+                  },
+                  {
+                    label: 'Conversions',
+                    value: selected.conversions.toLocaleString('en-IN'),
+                    sub: `${selected.cvr}% CVR`,
+                  },
                 ].map((row) => (
-                  <div key={row.label} className="flex items-center justify-between py-1.5 border-b border-border/40 last:border-0">
+                  <div
+                    key={row.label}
+                    className="flex items-center justify-between py-1.5 border-b border-border/40 last:border-0"
+                  >
                     <span className="text-xs text-muted-foreground">{row.label}</span>
                     <div className="text-right">
-                      <span className="text-xs font-600 font-mono text-foreground">{row.value}</span>
+                      <span className="text-xs font-600 font-mono text-foreground">
+                        {row.value}
+                      </span>
                       <span className="ml-1.5 text-2xs text-muted-foreground/70">{row.sub}</span>
                     </div>
                   </div>
@@ -321,7 +414,9 @@ export default function CampaignInsightsClient() {
               <div className="mt-4 flex items-center justify-between">
                 <div>
                   <p className="text-2xs text-muted-foreground">Total Revenue</p>
-                  <p className="text-sm font-700 font-mono text-positive">{formatINR(selected.revenue, true)}</p>
+                  <p className="text-sm font-700 font-mono text-positive">
+                    {formatINR(selected.revenue, true)}
+                  </p>
                 </div>
                 <div className="text-right">
                   <p className="text-2xs text-muted-foreground">Avg Monthly</p>
@@ -350,8 +445,12 @@ export default function CampaignInsightsClient() {
             {recs.length === 0 ? (
               <div className="rounded-xl border border-border bg-muted/20 px-5 py-8 text-center">
                 <Zap size={24} className="mx-auto mb-2 text-muted-foreground/40" />
-                <p className="text-sm text-muted-foreground">No specific recommendations for this campaign.</p>
-                <p className="text-xs text-muted-foreground/70 mt-1">Performance looks stable — keep monitoring.</p>
+                <p className="text-sm text-muted-foreground">
+                  No specific recommendations for this campaign.
+                </p>
+                <p className="text-xs text-muted-foreground/70 mt-1">
+                  Performance looks stable — keep monitoring.
+                </p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -373,14 +472,20 @@ export default function CampaignInsightsClient() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex flex-wrap items-center gap-2 mb-1">
-                            <span className={`text-2xs font-700 uppercase tracking-wider ${priorityColors[rec.priority]}`}>
+                            <span
+                              className={`text-2xs font-700 uppercase tracking-wider ${priorityColors[rec.priority]}`}
+                            >
                               {rec.priority} priority
                             </span>
-                            <span className={`rounded-full px-2 py-0.5 text-2xs font-600 ${config.badgeClass}`}>
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-2xs font-600 ${config.badgeClass}`}
+                            >
                               {config.label}
                             </span>
                           </div>
-                          <p className="text-sm font-600 text-foreground leading-snug">{rec.headline}</p>
+                          <p className="text-sm font-600 text-foreground leading-snug">
+                            {rec.headline}
+                          </p>
                         </div>
                         <div className="flex-shrink-0 mt-0.5 text-muted-foreground">
                           {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -388,11 +493,17 @@ export default function CampaignInsightsClient() {
                       </button>
                       {isExpanded && (
                         <div className="mt-3 ml-11 animate-fade-in">
-                          <p className="text-sm text-muted-foreground leading-relaxed mb-3">{rec.detail}</p>
+                          <p className="text-sm text-muted-foreground leading-relaxed mb-3">
+                            {rec.detail}
+                          </p>
                           <div className="flex flex-wrap items-center gap-3">
                             <div className="rounded-lg border border-border bg-card/60 px-3 py-1.5">
-                              <span className="text-2xs text-muted-foreground">Potential impact: </span>
-                              <span className="text-xs font-600 text-positive font-mono">{rec.potentialImpact}</span>
+                              <span className="text-2xs text-muted-foreground">
+                                Potential impact:{' '}
+                              </span>
+                              <span className="text-xs font-600 text-positive font-mono">
+                                {rec.potentialImpact}
+                              </span>
                             </div>
                             <button className="flex items-center gap-1.5 rounded-lg bg-foreground/10 px-3 py-1.5 text-xs font-600 text-foreground transition-all duration-150 hover:bg-foreground/20 active:scale-95">
                               {rec.action}

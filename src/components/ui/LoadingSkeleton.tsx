@@ -6,12 +6,7 @@ interface SkeletonProps {
 }
 
 export function Skeleton({ className = '', style }: SkeletonProps) {
-  return (
-    <div
-      className={`animate-pulse rounded-md bg-muted/60 ${className}`}
-      style={style}
-    />
-  );
+  return <div className={`animate-pulse rounded-md bg-muted/60 ${className}`} style={style} />;
 }
 
 export function KPICardSkeleton() {

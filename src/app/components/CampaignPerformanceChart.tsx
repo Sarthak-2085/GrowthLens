@@ -27,7 +27,11 @@ const barColors = [
 
 const MAX_BARS = 10; // cap for chart legibility + render cost
 
-function CustomTooltip({ active, payload, label }: {
+function CustomTooltip({
+  active,
+  payload,
+  label,
+}: {
   active?: boolean;
   payload?: Array<{ name: string; value: number }>;
   label?: string;
@@ -93,13 +97,19 @@ export default function CampaignPerformanceChart() {
           tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
           axisLine={false}
           tickLine={false}
-          tickFormatter={(v) => (v >= 100000 ? `₹${(v / 100000).toFixed(0)}L` : `₹${(v / 1000).toFixed(0)}K`)}
+          tickFormatter={(v) =>
+            v >= 100000 ? `₹${(v / 100000).toFixed(0)}L` : `₹${(v / 1000).toFixed(0)}K`
+          }
           width={52}
         />
         <Tooltip content={<CustomTooltip />} />
         <Bar dataKey="revenue" name="Revenue" radius={[4, 4, 0, 0]}>
           {chartData.map((_, index) => (
-            <Cell key={`cell-${index}`} fill={barColors[index % barColors.length]} fillOpacity={0.85} />
+            <Cell
+              key={`cell-${index}`}
+              fill={barColors[index % barColors.length]}
+              fillOpacity={0.85}
+            />
           ))}
         </Bar>
       </BarChart>

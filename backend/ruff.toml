@@ -1,0 +1,7 @@
+line-length = 110
+
+[lint]
+select = ["E", "F", "I", "B"]
+ignore = [
+    "B008",  # Depends(...)/Query(...)/File(...) in argument defaults is the standard FastAPI DI pattern
+]

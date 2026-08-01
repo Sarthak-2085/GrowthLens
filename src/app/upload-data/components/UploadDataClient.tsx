@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
+import Link from 'next/link';
 import {
   UploadCloud,
   CheckCircle2,
@@ -15,23 +16,75 @@ import {
   Info,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { uploadCampaignCsv, getDatasets, deleteDataset, ApiError, type Dataset, type RowError } from '@/lib/api';
+import {
+  uploadCampaignCsv,
+  getDatasets,
+  deleteDataset,
+  ApiError,
+  type Dataset,
+  type RowError,
+} from '@/lib/api';
 
 // Columns the backend actually accepts (app/services/csv_service.py)
 const REQUIRED_COLUMNS = [
-  { key: 'col-campaign', name: 'campaign', description: 'Unique name for the campaign', example: 'Diwali Sale Q4 2025' },
-  { key: 'col-budget', name: 'budget', description: 'Total allocated budget in INR', example: '180000' },
+  {
+    key: 'col-campaign',
+    name: 'campaign',
+    description: 'Unique name for the campaign',
+    example: 'Diwali Sale Q4 2025',
+  },
+  {
+    key: 'col-budget',
+    name: 'budget',
+    description: 'Total allocated budget in INR',
+    example: '180000',
+  },
   { key: 'col-clicks', name: 'clicks', description: 'Total number of ad clicks', example: '14820' },
-  { key: 'col-impressions', name: 'impressions', description: 'Total ad impressions served', example: '312400' },
-  { key: 'col-conversions', name: 'conversions', description: 'Total conversion events', example: '892' },
-  { key: 'col-revenue', name: 'revenue', description: 'Attributed revenue in INR', example: '682000' },
+  {
+    key: 'col-impressions',
+    name: 'impressions',
+    description: 'Total ad impressions served',
+    example: '312400',
+  },
+  {
+    key: 'col-conversions',
+    name: 'conversions',
+    description: 'Total conversion events',
+    example: '892',
+  },
+  {
+    key: 'col-revenue',
+    name: 'revenue',
+    description: 'Attributed revenue in INR',
+    example: '682000',
+  },
 ];
 
 const OPTIONAL_COLUMNS = [
-  { key: 'col-channel', name: 'channel', description: 'Marketing channel — defaults to "Other" if omitted', example: 'Google Ads' },
-  { key: 'col-status', name: 'status', description: 'active/paused/completed/draft — defaults to "active"', example: 'completed' },
-  { key: 'col-start_date', name: 'start_date', description: 'Campaign start date (YYYY-MM-DD)', example: '2025-10-15' },
-  { key: 'col-end_date', name: 'end_date', description: 'Campaign end date (YYYY-MM-DD)', example: '2025-11-05' },
+  {
+    key: 'col-channel',
+    name: 'channel',
+    description: 'Marketing channel — defaults to "Other" if omitted',
+    example: 'Google Ads',
+  },
+  {
+    key: 'col-status',
+    name: 'status',
+    description: 'active/paused/completed/draft — defaults to "active"',
+    example: 'completed',
+  },
+  {
+    key: 'col-start_date',
+    name: 'start_date',
+    description: 'Campaign start date (YYYY-MM-DD)',
+    example: '2025-10-15',
+  },
+  {
+    key: 'col-end_date',
+    name: 'end_date',
+    description: 'Campaign end date (YYYY-MM-DD)',
+    example: '2025-11-05',
+  },
 ];
 
 type ValidationStatus = 'idle' | 'validating' | 'valid' | 'error';
@@ -53,14 +106,18 @@ function parseCSV(text: string): { headers: string[]; rows: ParsedRow[] } {
   const lines = text.trim().split(/\r?\n/);
   if (lines.length < 2) return { headers: [], rows: [] };
 
-  const headers = lines[0].split(',').map((h) => h.trim().toLowerCase().replace(/\s+/g, '_').replace(/['"]/g, ''));
+  const headers = lines[0]
+    .split(',')
+    .map((h) => h.trim().toLowerCase().replace(/\s+/g, '_').replace(/['"]/g, ''));
   const rows: ParsedRow[] = [];
 
   for (let i = 1; i < lines.length; i++) {
     const values = lines[i].split(',').map((v) => v.trim().replace(/^["']|["']$/g, ''));
     if (values.length === headers.length) {
       const row: ParsedRow = {};
-      headers.forEach((h, idx) => { row[h] = values[idx]; });
+      headers.forEach((h, idx) => {
+        row[h] = values[idx];
+      });
       rows.push(row);
     }
   }
@@ -116,7 +173,9 @@ export default function UploadDataClient() {
       const text = e.target?.result as string;
       if (!text) {
         setValidationStatus('error');
-        toast.error('Could not read file', { description: 'File appears to be empty or unreadable.' });
+        toast.error('Could not read file', {
+          description: 'File appears to be empty or unreadable.',
+        });
         return;
       }
 
@@ -124,13 +183,25 @@ export default function UploadDataClient() {
 
       if (headers.length === 0) {
         setValidationStatus('error');
-        toast.error('Invalid CSV format', { description: 'Could not parse headers. Ensure the file uses comma-separated values.' });
+        toast.error('Invalid CSV format', {
+          description: 'Could not parse headers. Ensure the file uses comma-separated values.',
+        });
         return;
       }
 
       const colValidations: ColumnValidation[] = [
-        ...REQUIRED_COLUMNS.map((col) => ({ key: col.key, name: col.name, present: headers.includes(col.name), required: true })),
-        ...OPTIONAL_COLUMNS.map((col) => ({ key: col.key, name: col.name, present: headers.includes(col.name), required: false })),
+        ...REQUIRED_COLUMNS.map((col) => ({
+          key: col.key,
+          name: col.name,
+          present: headers.includes(col.name),
+          required: true,
+        })),
+        ...OPTIONAL_COLUMNS.map((col) => ({
+          key: col.key,
+          name: col.name,
+          present: headers.includes(col.name),
+          required: false,
+        })),
       ];
       setColumnValidations(colValidations);
 
@@ -144,9 +215,12 @@ export default function UploadDataClient() {
 
       if (missingRequired.length > 0) {
         setValidationStatus('error');
-        toast.error(`Missing ${missingRequired.length} required column${missingRequired.length > 1 ? 's' : ''}`, {
-          description: missingRequired.map((c) => c.name).join(', '),
-        });
+        toast.error(
+          `Missing ${missingRequired.length} required column${missingRequired.length > 1 ? 's' : ''}`,
+          {
+            description: missingRequired.map((c) => c.name).join(', '),
+          }
+        );
         return;
       }
 
@@ -164,29 +238,35 @@ export default function UploadDataClient() {
     reader.readAsText(file, 'UTF-8');
   }, []);
 
-  const handleFileSelect = useCallback((file: File) => {
-    if (!file.name.endsWith('.csv')) {
-      toast.error('Invalid file type', {
-        description: 'GrowthLens accepts CSV files only. Export your data as CSV and try again.',
-      });
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('File too large', {
-        description: 'Maximum file size is 5MB. Split your dataset into smaller files.',
-      });
-      return;
-    }
-    setUploadedFile(file);
-    processCSV(file);
-  }, [processCSV]);
+  const handleFileSelect = useCallback(
+    (file: File) => {
+      if (!file.name.endsWith('.csv')) {
+        toast.error('Invalid file type', {
+          description: 'GrowthLens accepts CSV files only. Export your data as CSV and try again.',
+        });
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('File too large', {
+          description: 'Maximum file size is 5MB. Split your dataset into smaller files.',
+        });
+        return;
+      }
+      setUploadedFile(file);
+      processCSV(file);
+    },
+    [processCSV]
+  );
 
-  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    const file = e.dataTransfer.files[0];
-    if (file) handleFileSelect(file);
-  }, [handleFileSelect]);
+  const handleDrop = useCallback(
+    (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      setIsDragOver(false);
+      const file = e.dataTransfer.files[0];
+      if (file) handleFileSelect(file);
+    },
+    [handleFileSelect]
+  );
 
   const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -195,10 +275,13 @@ export default function UploadDataClient() {
 
   const handleDragLeave = useCallback(() => setIsDragOver(false), []);
 
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) handleFileSelect(file);
-  }, [handleFileSelect]);
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (file) handleFileSelect(file);
+    },
+    [handleFileSelect]
+  );
 
   const handleUpload = useCallback(async () => {
     if (!uploadedFile || validationStatus !== 'valid') return;
@@ -245,16 +328,19 @@ export default function UploadDataClient() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   }, []);
 
-  const handleDeleteDataset = useCallback(async (id: string, filename: string) => {
-    try {
-      await deleteDataset(id);
-      toast.success('Dataset removed', { description: filename });
-      loadDatasets();
-    } catch (err) {
-      const message = err instanceof ApiError ? err.message : 'Could not remove dataset.';
-      toast.error('Delete failed', { description: message });
-    }
-  }, [loadDatasets]);
+  const handleDeleteDataset = useCallback(
+    async (id: string, filename: string) => {
+      try {
+        await deleteDataset(id);
+        toast.success('Dataset removed', { description: filename });
+        loadDatasets();
+      } catch (err) {
+        const message = err instanceof ApiError ? err.message : 'Could not remove dataset.';
+        toast.error('Delete failed', { description: message });
+      }
+    },
+    [loadDatasets]
+  );
 
   const validCount = columnValidations.filter((c) => c.present).length;
   const invalidCount = columnValidations.filter((c) => c.required && !c.present).length;
@@ -287,7 +373,8 @@ export default function UploadDataClient() {
         <div>
           <h1 className="text-2xl font-700 text-foreground tracking-tight">Upload Campaign Data</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Import your marketing campaign CSV to generate AI-powered insights and budget recommendations.
+            Import your marketing campaign CSV to generate AI-powered insights and budget
+            recommendations.
           </p>
         </div>
         <a
@@ -328,7 +415,9 @@ export default function UploadDataClient() {
             <div className="flex flex-col items-center justify-center px-8 py-14 text-center">
               {uploadComplete ? (
                 <>
-                  <div className={`mb-4 flex h-16 w-16 items-center justify-center rounded-2xl ${insertedCount > 0 ? 'bg-positive/15' : 'bg-negative/15'}`}>
+                  <div
+                    className={`mb-4 flex h-16 w-16 items-center justify-center rounded-2xl ${insertedCount > 0 ? 'bg-positive/15' : 'bg-negative/15'}`}
+                  >
                     {insertedCount > 0 ? (
                       <CheckCircle2 size={32} className="text-positive" />
                     ) : (
@@ -346,7 +435,9 @@ export default function UploadDataClient() {
                 </>
               ) : uploadedFile ? (
                 <>
-                  <div className={`mb-4 flex h-16 w-16 items-center justify-center rounded-2xl ${validationStatus === 'valid' ? 'bg-positive/15' : validationStatus === 'validating' ? 'bg-primary/15' : 'bg-negative/15'}`}>
+                  <div
+                    className={`mb-4 flex h-16 w-16 items-center justify-center rounded-2xl ${validationStatus === 'valid' ? 'bg-positive/15' : validationStatus === 'validating' ? 'bg-primary/15' : 'bg-negative/15'}`}
+                  >
                     {validationStatus === 'validating' ? (
                       <div className="h-7 w-7 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                     ) : validationStatus === 'valid' ? (
@@ -356,7 +447,11 @@ export default function UploadDataClient() {
                     )}
                   </div>
                   <h3 className="text-base font-600 text-foreground mb-1">
-                    {validationStatus === 'validating' ? 'Parsing CSV…' : validationStatus === 'valid' ? 'File looks good' : 'Validation failed'}
+                    {validationStatus === 'validating'
+                      ? 'Parsing CSV…'
+                      : validationStatus === 'valid'
+                        ? 'File looks good'
+                        : 'Validation failed'}
                   </h3>
                   <p className="text-sm text-muted-foreground mb-0.5">{uploadedFile.name}</p>
                   <p className="text-xs text-muted-foreground">
@@ -366,8 +461,13 @@ export default function UploadDataClient() {
                 </>
               ) : (
                 <>
-                  <div className={`mb-4 flex h-16 w-16 items-center justify-center rounded-2xl transition-all duration-200 ${isDragOver ? 'bg-primary/20 scale-110' : 'bg-muted'}`}>
-                    <UploadCloud size={32} className={isDragOver ? 'text-primary' : 'text-muted-foreground'} />
+                  <div
+                    className={`mb-4 flex h-16 w-16 items-center justify-center rounded-2xl transition-all duration-200 ${isDragOver ? 'bg-primary/20 scale-110' : 'bg-muted'}`}
+                  >
+                    <UploadCloud
+                      size={32}
+                      className={isDragOver ? 'text-primary' : 'text-muted-foreground'}
+                    />
                   </div>
                   <h3 className="text-base font-600 text-foreground mb-2">
                     {isDragOver ? 'Drop your CSV here' : 'Drag & drop your CSV file'}
@@ -376,9 +476,15 @@ export default function UploadDataClient() {
                     or <span className="text-primary font-500">click to browse</span>
                   </p>
                   <div className="flex flex-wrap justify-center gap-2">
-                    <span className="rounded-full border border-border bg-card px-3 py-1 text-xs text-muted-foreground">CSV only</span>
-                    <span className="rounded-full border border-border bg-card px-3 py-1 text-xs text-muted-foreground">Max 5MB</span>
-                    <span className="rounded-full border border-border bg-card px-3 py-1 text-xs text-muted-foreground">UTF-8 encoded</span>
+                    <span className="rounded-full border border-border bg-card px-3 py-1 text-xs text-muted-foreground">
+                      CSV only
+                    </span>
+                    <span className="rounded-full border border-border bg-card px-3 py-1 text-xs text-muted-foreground">
+                      Max 5MB
+                    </span>
+                    <span className="rounded-full border border-border bg-card px-3 py-1 text-xs text-muted-foreground">
+                      UTF-8 encoded
+                    </span>
                   </div>
                 </>
               )}
@@ -417,13 +523,13 @@ export default function UploadDataClient() {
 
           {uploadComplete && (
             <div className="flex items-center gap-3">
-              <a
+              <Link
                 href="/"
                 className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-600 text-primary-foreground transition-all duration-150 hover:bg-primary/90 active:scale-95"
               >
                 View Dashboard
                 <ChevronRight size={15} />
-              </a>
+              </Link>
               <button
                 onClick={handleClearFile}
                 className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-500 text-muted-foreground transition-all duration-150 hover:bg-muted hover:text-foreground active:scale-95"
@@ -454,7 +560,11 @@ export default function UploadDataClient() {
                   <div
                     key={col.key}
                     className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-colors ${
-                      col.present ? 'border-positive/20 bg-positive/5' : col.required ? 'border-negative/20 bg-negative/5' : 'border-border bg-muted/20'
+                      col.present
+                        ? 'border-positive/20 bg-positive/5'
+                        : col.required
+                          ? 'border-negative/20 bg-negative/5'
+                          : 'border-border bg-muted/20'
                     }`}
                   >
                     {col.present ? (
@@ -464,11 +574,15 @@ export default function UploadDataClient() {
                     ) : (
                       <Info size={14} className="text-muted-foreground flex-shrink-0" />
                     )}
-                    <span className={`text-xs font-mono font-500 ${col.present ? 'text-foreground' : col.required ? 'text-negative' : 'text-muted-foreground'}`}>
+                    <span
+                      className={`text-xs font-mono font-500 ${col.present ? 'text-foreground' : col.required ? 'text-negative' : 'text-muted-foreground'}`}
+                    >
                       {col.name}
                     </span>
                     {!col.present && (
-                      <span className={`ml-auto text-2xs ${col.required ? 'text-negative' : 'text-muted-foreground'}`}>
+                      <span
+                        className={`ml-auto text-2xs ${col.required ? 'text-negative' : 'text-muted-foreground'}`}
+                      >
                         {col.required ? 'missing' : 'optional'}
                       </span>
                     )}
@@ -483,12 +597,19 @@ export default function UploadDataClient() {
             <div className="card-glass p-5 animate-slide-up border border-negative/20">
               <div className="mb-3 flex items-center gap-2">
                 <AlertCircle size={14} className="text-negative" />
-                <h3 className="text-sm font-600 text-negative">Rows Skipped ({rowErrors.length})</h3>
-                <span className="text-2xs text-muted-foreground">The rest of the file was still imported</span>
+                <h3 className="text-sm font-600 text-negative">
+                  Rows Skipped ({rowErrors.length})
+                </h3>
+                <span className="text-2xs text-muted-foreground">
+                  The rest of the file was still imported
+                </span>
               </div>
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {rowErrors.map((err, i) => (
-                  <div key={`err-${i}`} className="flex items-start gap-3 rounded-lg border border-negative/15 bg-negative/5 px-3 py-2.5">
+                  <div
+                    key={`err-${i}`}
+                    className="flex items-start gap-3 rounded-lg border border-negative/15 bg-negative/5 px-3 py-2.5"
+                  >
                     <XCircle size={13} className="mt-0.5 flex-shrink-0 text-negative" />
                     <div>
                       <span className="text-xs font-600 text-negative">Row {err.row} · </span>
@@ -509,14 +630,19 @@ export default function UploadDataClient() {
                   <h3 className="text-sm font-600 text-foreground">Data Preview</h3>
                   <span className="text-xs text-muted-foreground">First 5 rows of {totalRows}</span>
                 </div>
-                <span className="text-xs text-muted-foreground">Scroll horizontally to see all columns</span>
+                <span className="text-xs text-muted-foreground">
+                  Scroll horizontally to see all columns
+                </span>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[900px] text-xs">
                   <thead className="border-b border-border bg-muted/30">
                     <tr>
                       {previewHeaders.map((col) => (
-                        <th key={`th-${col}`} className="px-3 py-2.5 text-left font-600 uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+                        <th
+                          key={`th-${col}`}
+                          className="px-3 py-2.5 text-left font-600 uppercase tracking-wider text-muted-foreground whitespace-nowrap"
+                        >
                           {col}
                         </th>
                       ))}
@@ -524,23 +650,38 @@ export default function UploadDataClient() {
                   </thead>
                   <tbody className="divide-y divide-border/50">
                     {previewRows.map((row, rowIdx) => (
-                      <tr key={`preview-row-${rowIdx}`} className="hover:bg-white/3 transition-colors">
+                      <tr
+                        key={`preview-row-${rowIdx}`}
+                        className="hover:bg-white/3 transition-colors"
+                      >
                         {previewHeaders.map((col) => {
                           const val = row[col] ?? '—';
                           const isMonetary = ['budget', 'revenue'].includes(col);
                           const isStatus = col === 'status';
                           return (
-                            <td key={`cell-${rowIdx}-${col}`} className="px-3 py-2.5 text-muted-foreground whitespace-nowrap">
+                            <td
+                              key={`cell-${rowIdx}-${col}`}
+                              className="px-3 py-2.5 text-muted-foreground whitespace-nowrap"
+                            >
                               {isMonetary ? (
                                 <span className="font-mono font-500 text-foreground">
                                   ₹{parseInt(val || '0').toLocaleString('en-IN')}
                                 </span>
                               ) : isStatus ? (
-                                <span className={`rounded-full px-2 py-0.5 text-2xs font-600 ${
-                                  val === 'active' ? 'bg-positive/15 text-positive' :
-                                  val === 'paused'? 'bg-warning/15 text-warning' : 'bg-accent/15 text-accent'
-                                }`}>{val}</span>
-                              ) : val}
+                                <span
+                                  className={`rounded-full px-2 py-0.5 text-2xs font-600 ${
+                                    val === 'active'
+                                      ? 'bg-positive/15 text-positive'
+                                      : val === 'paused'
+                                        ? 'bg-warning/15 text-warning'
+                                        : 'bg-accent/15 text-accent'
+                                  }`}
+                                >
+                                  {val}
+                                </span>
+                              ) : (
+                                val
+                              )}
                             </td>
                           );
                         })}
@@ -563,23 +704,39 @@ export default function UploadDataClient() {
             </div>
             <div className="space-y-3">
               {REQUIRED_COLUMNS.map((col) => (
-                <div key={col.key} className="border-b border-border/50 pb-3 last:border-0 last:pb-0">
+                <div
+                  key={col.key}
+                  className="border-b border-border/50 pb-3 last:border-0 last:pb-0"
+                >
                   <div className="flex items-center justify-between mb-0.5">
                     <code className="text-xs font-mono font-600 text-primary">{col.name}</code>
-                    <span className="text-2xs text-muted-foreground bg-muted rounded px-1.5 py-0.5">required</span>
+                    <span className="text-2xs text-muted-foreground bg-muted rounded px-1.5 py-0.5">
+                      required
+                    </span>
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed">{col.description}</p>
-                  <p className="mt-0.5 text-2xs text-muted-foreground/70">e.g. <span className="font-mono">{col.example}</span></p>
+                  <p className="mt-0.5 text-2xs text-muted-foreground/70">
+                    e.g. <span className="font-mono">{col.example}</span>
+                  </p>
                 </div>
               ))}
               {OPTIONAL_COLUMNS.map((col) => (
-                <div key={col.key} className="border-b border-border/50 pb-3 last:border-0 last:pb-0">
+                <div
+                  key={col.key}
+                  className="border-b border-border/50 pb-3 last:border-0 last:pb-0"
+                >
                   <div className="flex items-center justify-between mb-0.5">
-                    <code className="text-xs font-mono font-600 text-muted-foreground">{col.name}</code>
-                    <span className="text-2xs text-muted-foreground bg-muted/50 rounded px-1.5 py-0.5">optional</span>
+                    <code className="text-xs font-mono font-600 text-muted-foreground">
+                      {col.name}
+                    </code>
+                    <span className="text-2xs text-muted-foreground bg-muted/50 rounded px-1.5 py-0.5">
+                      optional
+                    </span>
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed">{col.description}</p>
-                  <p className="mt-0.5 text-2xs text-muted-foreground/70">e.g. <span className="font-mono">{col.example}</span></p>
+                  <p className="mt-0.5 text-2xs text-muted-foreground/70">
+                    e.g. <span className="font-mono">{col.example}</span>
+                  </p>
                 </div>
               ))}
             </div>
@@ -608,11 +765,21 @@ export default function UploadDataClient() {
                       <CheckCircle2 size={14} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-500 text-foreground truncate">{dataset.filename}</p>
-                      <p className="text-2xs text-muted-foreground mt-0.5">
-                        {new Date(dataset.uploaded_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      <p className="text-xs font-500 text-foreground truncate">
+                        {dataset.filename}
                       </p>
-                      <p className="text-2xs text-positive mt-0.5">{dataset.row_count} rows imported</p>
+                      <p className="text-2xs text-muted-foreground mt-0.5">
+                        {new Date(dataset.uploaded_at).toLocaleString('en-IN', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </p>
+                      <p className="text-2xs text-positive mt-0.5">
+                        {dataset.row_count} rows imported
+                      </p>
                     </div>
                     <button
                       onClick={() => handleDeleteDataset(dataset.id, dataset.filename)}
@@ -634,7 +801,9 @@ export default function UploadDataClient() {
               <div>
                 <p className="text-xs font-600 text-warning mb-1">INR Formatting Note</p>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  Monetary values (budget, revenue) must be in INR without currency symbols. Use plain integers: <code className="font-mono text-foreground">180000</code> not <code className="font-mono">₹1,80,000</code>.
+                  Monetary values (budget, revenue) must be in INR without currency symbols. Use
+                  plain integers: <code className="font-mono text-foreground">180000</code> not{' '}
+                  <code className="font-mono">₹1,80,000</code>.
                 </p>
               </div>
             </div>

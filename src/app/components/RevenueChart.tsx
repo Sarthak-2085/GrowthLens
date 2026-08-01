@@ -15,7 +15,11 @@ import EmptyState from '@/components/ui/EmptyState';
 import { CalendarRange } from 'lucide-react';
 import { useCampaigns } from './CampaignsProvider';
 
-function CustomTooltip({ active, payload, label }: {
+function CustomTooltip({
+  active,
+  payload,
+  label,
+}: {
   active?: boolean;
   payload?: Array<{ name: string; value: number; color: string }>;
   label?: string;
@@ -33,10 +37,15 @@ function CustomTooltip({ active, payload, label }: {
       <p className="mb-2 text-xs font-600 text-muted-foreground">{label}</p>
       {payload.map((entry) => (
         <div key={`tooltip-${entry.name}`} className="flex items-center gap-2 py-0.5">
-          <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ background: entry.color }} />
+          <span
+            className="h-2 w-2 rounded-full flex-shrink-0"
+            style={{ background: entry.color }}
+          />
           <span className="text-xs text-muted-foreground capitalize">{entry.name}:</span>
           <span className="text-xs font-600 font-mono text-foreground">
-            {entry.name === 'conversions' ? entry.value.toLocaleString('en-IN') : formatVal(entry.value)}
+            {entry.name === 'conversions'
+              ? entry.value.toLocaleString('en-IN')
+              : formatVal(entry.value)}
           </span>
         </div>
       ))}
@@ -48,7 +57,10 @@ export default function RevenueChart() {
   const { campaigns, loading } = useCampaigns();
 
   const trend = useMemo(() => {
-    const byMonth = new Map<string, { revenue: number; spend: number; conversions: number; sortKey: string }>();
+    const byMonth = new Map<
+      string,
+      { revenue: number; spend: number; conversions: number; sortKey: string }
+    >();
     for (const c of campaigns) {
       if (!c.start_date) continue;
       const d = new Date(c.start_date);
@@ -63,7 +75,12 @@ export default function RevenueChart() {
     }
     return Array.from(byMonth.values())
       .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
-      .map((e) => ({ month: (e as any).month, revenue: e.revenue, spend: e.spend, conversions: e.conversions }));
+      .map((e) => ({
+        month: (e as any).month,
+        revenue: e.revenue,
+        spend: e.spend,
+        conversions: e.conversions,
+      }));
   }, [campaigns]);
 
   if (loading) return <div className="h-[280px] animate-pulse rounded-md bg-muted/60" />;
@@ -103,11 +120,15 @@ export default function RevenueChart() {
           tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }}
           axisLine={false}
           tickLine={false}
-          tickFormatter={(v) => (v >= 100000 ? `₹${(v / 100000).toFixed(0)}L` : `₹${(v / 1000).toFixed(0)}K`)}
+          tickFormatter={(v) =>
+            v >= 100000 ? `₹${(v / 100000).toFixed(0)}L` : `₹${(v / 1000).toFixed(0)}K`
+          }
           width={52}
         />
         <Tooltip content={<CustomTooltip />} />
-        <Legend wrapperStyle={{ fontSize: '12px', color: 'var(--muted-foreground)', paddingTop: '12px' }} />
+        <Legend
+          wrapperStyle={{ fontSize: '12px', color: 'var(--muted-foreground)', paddingTop: '12px' }}
+        />
         <Area
           type="monotone"
           dataKey="revenue"

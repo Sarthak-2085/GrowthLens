@@ -65,36 +65,28 @@ export default function MetricCard({
           >
             {value}
           </p>
-          {subValue && (
-            <p className="mt-1 text-xs text-muted-foreground font-mono">{subValue}</p>
-          )}
+          {subValue && <p className="mt-1 text-xs text-muted-foreground font-mono">{subValue}</p>}
           {description && (
             <p className="mt-2 text-xs text-muted-foreground leading-relaxed">{description}</p>
           )}
           {trend !== undefined && (
             <div className="mt-3 flex items-center gap-1.5">
-              {trendPositive && (
-                <TrendingUp size={12} className="text-positive flex-shrink-0" />
-              )}
-              {trendNegative && (
-                <TrendingDown size={12} className="text-negative flex-shrink-0" />
-              )}
-              {trendNeutral && (
-                <Minus size={12} className="text-muted-foreground flex-shrink-0" />
-              )}
+              {trendPositive && <TrendingUp size={12} className="text-positive flex-shrink-0" />}
+              {trendNegative && <TrendingDown size={12} className="text-negative flex-shrink-0" />}
+              {trendNeutral && <Minus size={12} className="text-muted-foreground flex-shrink-0" />}
               <span
                 className={`text-xs font-600 tabular-nums ${
                   trendPositive
                     ? 'text-positive'
                     : trendNegative
-                    ? 'text-negative' :'text-muted-foreground'
+                      ? 'text-negative'
+                      : 'text-muted-foreground'
                 }`}
               >
-                {trendPositive ? '+' : ''}{trend}%
+                {trendPositive ? '+' : ''}
+                {trend}%
               </span>
-              {trendLabel && (
-                <span className="text-xs text-muted-foreground">{trendLabel}</span>
-              )}
+              {trendLabel && <span className="text-xs text-muted-foreground">{trendLabel}</span>}
             </div>
           )}
         </div>

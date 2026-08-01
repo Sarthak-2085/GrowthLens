@@ -1,7 +1,12 @@
 'use client';
 
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { getAnalyticsSummary, getRecommendations, type AnalyticsSummary, type Recommendation } from '@/lib/api';
+import {
+  getAnalyticsSummary,
+  getRecommendations,
+  type AnalyticsSummary,
+  type Recommendation,
+} from '@/lib/api';
 
 interface AnalyticsContextValue {
   summary: AnalyticsSummary | null;

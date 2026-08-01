@@ -32,7 +32,9 @@ export default function DashboardCharts() {
         <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-base font-600 text-foreground">Revenue & Spend Trend</h2>
-            <p className="text-xs text-muted-foreground">Monthly revenue vs ad spend — Aug 2025 to Mar 2026</p>
+            <p className="text-xs text-muted-foreground">
+              Monthly revenue vs ad spend — Aug 2025 to Mar 2026
+            </p>
           </div>
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             <div className="flex items-center gap-1.5">

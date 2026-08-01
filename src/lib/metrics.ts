@@ -44,7 +44,16 @@ export function computeCPA(spend: number, conversions: number): number {
 
 // Fixed palette with stable fallback so a given channel name always renders
 // the same color across charts in one session.
-const CHANNEL_PALETTE = ['#8b5cf6', '#06b6d4', '#ec4899', '#22c55e', '#ef4444', '#f59e0b', '#3b82f6', '#a3e635'];
+const CHANNEL_PALETTE = [
+  '#8b5cf6',
+  '#06b6d4',
+  '#ec4899',
+  '#22c55e',
+  '#ef4444',
+  '#f59e0b',
+  '#3b82f6',
+  '#a3e635',
+];
 
 export function colorForChannel(channel: string, knownChannels: string[]): string {
   const idx = knownChannels.indexOf(channel);

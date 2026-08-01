@@ -51,7 +51,9 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
 @app.on_event("startup")
 def on_startup() -> None:
     init_db()
-    logger.info("GrowthLens API started — debug=%s, cors_origins=%s", settings.debug, settings.cors_origins_list)
+    logger.info(
+        "GrowthLens API started — debug=%s, cors_origins=%s", settings.debug, settings.cors_origins_list
+    )
 
 
 app.include_router(health.router, prefix=settings.api_prefix)

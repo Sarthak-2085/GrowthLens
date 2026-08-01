@@ -1,14 +1,7 @@
 'use client';
 
 import React from 'react';
-import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-} from 'recharts';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
 
 interface MiniTrendChartProps {
   data: { month: string; revenue: number }[];

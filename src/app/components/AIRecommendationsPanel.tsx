@@ -1,19 +1,31 @@
 'use client';
 
 import React, { useState } from 'react';
-import { TrendingUp, TrendingDown, Zap, AlertTriangle, ChevronDown, ChevronUp, ArrowRight, Sparkles } from 'lucide-react';
+import {
+  TrendingUp,
+  TrendingDown,
+  Zap,
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp,
+  ArrowRight,
+  Sparkles,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import EmptyState from '@/components/ui/EmptyState';
 import { useAnalytics } from './AnalyticsProvider';
 import type { Recommendation } from '@/lib/api';
 
-const typeConfig: Record<Recommendation['type'], {
-  icon: typeof TrendingUp;
-  iconClass: string;
-  bgClass: string;
-  badgeClass: string;
-  label: string;
-}> = {
+const typeConfig: Record<
+  Recommendation['type'],
+  {
+    icon: typeof TrendingUp;
+    iconClass: string;
+    bgClass: string;
+    badgeClass: string;
+    label: string;
+  }
+> = {
   increase: {
     icon: TrendingUp,
     iconClass: 'text-positive',
@@ -112,10 +124,14 @@ export default function AIRecommendationsPanel() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap items-center gap-2 mb-1">
-                  <span className={`text-2xs font-700 uppercase tracking-wider ${priorityColors[rec.priority]}`}>
+                  <span
+                    className={`text-2xs font-700 uppercase tracking-wider ${priorityColors[rec.priority]}`}
+                  >
                     {rec.priority} priority
                   </span>
-                  <span className={`rounded-full px-2 py-0.5 text-2xs font-600 ${config.badgeClass}`}>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-2xs font-600 ${config.badgeClass}`}
+                  >
                     {config.label}
                   </span>
                   {rec.channel && (
@@ -137,7 +153,9 @@ export default function AIRecommendationsPanel() {
                 <div className="flex flex-wrap items-center gap-3">
                   <div className="rounded-lg border border-border bg-card/60 px-3 py-1.5">
                     <span className="text-2xs text-muted-foreground">Potential impact: </span>
-                    <span className="text-xs font-600 text-positive font-mono">{rec.potential_impact}</span>
+                    <span className="text-xs font-600 text-positive font-mono">
+                      {rec.potential_impact}
+                    </span>
                   </div>
                   <button
                     onClick={() => handleAction(rec.action)}

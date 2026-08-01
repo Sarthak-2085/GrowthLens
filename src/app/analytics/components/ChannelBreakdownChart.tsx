@@ -1,7 +1,16 @@
 'use client';
 
 import React from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from 'recharts';
 
 export interface ChannelBreakdownRow {
   channel: string;
@@ -12,7 +21,11 @@ export interface ChannelBreakdownRow {
   color: string;
 }
 
-function CustomTooltip({ active, payload, label }: {
+function CustomTooltip({
+  active,
+  payload,
+  label,
+}: {
   active?: boolean;
   payload?: Array<{ name: string; value: number; color: string }>;
   label?: string;
@@ -50,7 +63,9 @@ export default function ChannelBreakdownChart({ data }: { data: ChannelBreakdown
           tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }}
           axisLine={false}
           tickLine={false}
-          tickFormatter={(v) => v >= 100000 ? `₹${(v / 100000).toFixed(0)}L` : `₹${(v / 1000).toFixed(0)}K`}
+          tickFormatter={(v) =>
+            v >= 100000 ? `₹${(v / 100000).toFixed(0)}L` : `₹${(v / 1000).toFixed(0)}K`
+          }
         />
         <YAxis
           type="category"

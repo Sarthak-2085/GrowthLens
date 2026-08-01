@@ -102,7 +102,9 @@ def get_campaign(campaign_id: int, db: Session = Depends(get_db)):
 @router.post("/campaigns", response_model=CampaignOut, status_code=201)
 def create_campaign(
     payload: CampaignCreate,
-    dataset_id: str | None = Query(None, description="Attach to an existing dataset; omit to create a manual entry"),
+    dataset_id: str | None = Query(
+        None, description="Attach to an existing dataset; omit to create a manual entry"
+    ),
     db: Session = Depends(get_db),
 ):
     if dataset_id:

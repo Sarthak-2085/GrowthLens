@@ -14,7 +14,11 @@ import {
 import type { Campaign } from '@/lib/api';
 import { computeCTR, computeCVR } from '@/lib/metrics';
 
-function CustomTooltip({ active, payload, label }: {
+function CustomTooltip({
+  active,
+  payload,
+  label,
+}: {
   active?: boolean;
   payload?: Array<{ name: string; value: number; color: string }>;
   label?: string;
@@ -27,7 +31,7 @@ function CustomTooltip({ active, payload, label }: {
         <div key={`ctr-tt-${entry.name}`} className="flex items-center gap-2 py-0.5">
           <span className="h-2 w-2 rounded-full" style={{ background: entry.color }} />
           <span className="text-xs text-muted-foreground">{entry.name}:</span>
-            <span className="text-xs font-600 font-mono text-foreground">{entry.value}%</span>
+          <span className="text-xs font-600 font-mono text-foreground">{entry.value}%</span>
         </div>
       ))}
     </div>

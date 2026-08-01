@@ -3,9 +3,18 @@
 import React from 'react';
 import Link from 'next/link';
 import AppLogo from './ui/AppLogo';
-import { LayoutDashboard, UploadCloud, BarChart3, Settings, ChevronLeft, ChevronRight, Zap, Lightbulb, FileBarChart } from 'lucide-react';
+import {
+  LayoutDashboard,
+  UploadCloud,
+  BarChart3,
+  Settings,
+  ChevronLeft,
+  ChevronRight,
+  Zap,
+  Lightbulb,
+  FileBarChart,
+} from 'lucide-react';
 import Icon from '@/components/ui/AppIcon';
-
 
 interface NavItem {
   id: string;
@@ -196,7 +205,14 @@ export default function Sidebar({
             onClick={onMobileClose}
             className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
@@ -243,19 +259,16 @@ function NavItemComponent({ item, collapsed, active, onClick }: NavItemComponent
         className={`
           flex items-center gap-3 rounded-lg px-2.5 py-2.5 text-sm font-500
           transition-all duration-150
-          ${active
-            ? 'sidebar-item-active' :'text-muted-foreground hover:bg-white/5 hover:text-foreground'
+          ${
+            active
+              ? 'sidebar-item-active'
+              : 'text-muted-foreground hover:bg-white/5 hover:text-foreground'
           }
           ${collapsed ? 'justify-center' : ''}
         `}
       >
-        <Icon
-          size={18}
-          className={`flex-shrink-0 ${active ? 'text-primary' : ''}`}
-        />
-        {!collapsed && (
-          <span className="flex-1 truncate">{item.label}</span>
-        )}
+        <Icon size={18} className={`flex-shrink-0 ${active ? 'text-primary' : ''}`} />
+        {!collapsed && <span className="flex-1 truncate">{item.label}</span>}
         {!collapsed && item.badge && (
           <span
             className={`
@@ -273,7 +286,9 @@ function NavItemComponent({ item, collapsed, active, onClick }: NavItemComponent
         <div className="pointer-events-none absolute left-full top-1/2 z-50 ml-2 -translate-y-1/2 whitespace-nowrap rounded-md border border-border bg-card px-2.5 py-1.5 text-xs font-500 text-foreground shadow-card opacity-0 transition-opacity duration-150 group-hover:opacity-100">
           {item.label}
           {item.badge && (
-            <span className={`ml-1.5 rounded-full px-1.5 py-0.5 text-2xs font-600 ${item.badgeVariant ? badgeColors[item.badgeVariant] : 'bg-muted text-muted-foreground'}`}>
+            <span
+              className={`ml-1.5 rounded-full px-1.5 py-0.5 text-2xs font-600 ${item.badgeVariant ? badgeColors[item.badgeVariant] : 'bg-muted text-muted-foreground'}`}
+            >
               {item.badge}
             </span>
           )}

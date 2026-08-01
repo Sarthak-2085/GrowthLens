@@ -17,7 +17,11 @@ import { TrendingUp } from 'lucide-react';
 import { useCampaigns } from './CampaignsProvider';
 import { computeROI, colorForChannel } from '@/lib/metrics';
 
-function CustomTooltip({ active, payload, label }: {
+function CustomTooltip({
+  active,
+  payload,
+  label,
+}: {
   active?: boolean;
   payload?: Array<{ value: number }>;
   label?: string;
@@ -28,7 +32,11 @@ function CustomTooltip({ active, payload, label }: {
     <div className="rounded-xl border border-border bg-card px-4 py-3 shadow-card">
       <p className="mb-1 text-xs font-600 text-foreground">{label}</p>
       <p className="text-xs text-muted-foreground">
-        ROI: <span className={`font-mono font-700 ${roi >= 0 ? 'text-positive' : 'text-negative'}`}>{roi >= 0 ? '+' : ''}{roi}%</span>
+        ROI:{' '}
+        <span className={`font-mono font-700 ${roi >= 0 ? 'text-positive' : 'text-negative'}`}>
+          {roi >= 0 ? '+' : ''}
+          {roi}%
+        </span>
       </p>
     </div>
   );
@@ -49,7 +57,11 @@ export default function ROIComparisonChart() {
     return channels
       .map((channel) => {
         const { revenue, budget } = byChannel.get(channel)!;
-        return { channel, roi: computeROI(revenue, budget), color: colorForChannel(channel, channels) };
+        return {
+          channel,
+          roi: computeROI(revenue, budget),
+          color: colorForChannel(channel, channels),
+        };
       })
       .sort((a, b) => b.roi - a.roi);
   }, [campaigns]);
@@ -89,7 +101,11 @@ export default function ROIComparisonChart() {
         <ReferenceLine x={0} stroke="var(--border)" strokeWidth={1.5} />
         <Bar dataKey="roi" radius={[0, 4, 4, 0]}>
           {roiData.map((entry, index) => (
-            <Cell key={`roi-cell-${index}`} fill={entry.roi >= 0 ? entry.color : 'var(--negative)'} fillOpacity={0.85} />
+            <Cell
+              key={`roi-cell-${index}`}
+              fill={entry.roi >= 0 ? entry.color : 'var(--negative)'}
+              fillOpacity={0.85}
+            />
           ))}
         </Bar>
       </BarChart>

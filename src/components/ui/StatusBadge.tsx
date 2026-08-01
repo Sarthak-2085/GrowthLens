@@ -1,17 +1,22 @@
 import React from 'react';
 
 type StatusType =
-  | 'active' |'paused' |'completed' |'draft' |'archived' |'high' |'medium' |'low' |'critical';
+  | 'active'
+  | 'paused'
+  | 'completed'
+  | 'draft'
+  | 'archived'
+  | 'high'
+  | 'medium'
+  | 'low'
+  | 'critical';
 
 interface StatusBadgeProps {
   status: StatusType;
   size?: 'sm' | 'default';
 }
 
-const statusConfig: Record<
-  StatusType,
-  { label: string; className: string; dot: string }
-> = {
+const statusConfig: Record<StatusType, { label: string; className: string; dot: string }> = {
   active: {
     label: 'Active',
     className: 'bg-positive/15 text-positive border border-positive/25',

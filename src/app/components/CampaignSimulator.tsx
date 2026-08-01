@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import React, { useEffect, useMemo, useState } from 'react';
 import { FlaskConical, Sparkles, Lock, AlertCircle, Loader2 } from 'lucide-react';
 import MetricCard from '@/components/ui/MetricCard';
@@ -84,10 +85,15 @@ export default function CampaignSimulator() {
     setPrediction(null);
 
     try {
-      const result = await predictCampaignOutcome({ channel: channel.trim(), budget: parsedBudget });
+      const result = await predictCampaignOutcome({
+        channel: channel.trim(),
+        budget: parsedBudget,
+      });
       setPrediction(result);
     } catch (err) {
-      setPredictError(err instanceof ApiError ? err.message : 'Prediction failed. Please try again.');
+      setPredictError(
+        err instanceof ApiError ? err.message : 'Prediction failed. Please try again.'
+      );
     } finally {
       setPredictLoading(false);
     }
@@ -124,12 +130,12 @@ export default function CampaignSimulator() {
           title="Not enough data yet"
           description={status.message}
           action={
-            <a
+            <Link
               href="/upload-data"
               className="rounded-lg bg-primary px-4 py-2 text-xs font-600 text-primary-foreground transition-all duration-150 hover:bg-primary/90 active:scale-95"
             >
               Upload more campaigns
-            </a>
+            </Link>
           }
         />
       ) : (
@@ -141,9 +147,15 @@ export default function CampaignSimulator() {
             </p>
           )}
 
-          <form onSubmit={handlePredict} className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end">
+          <form
+            onSubmit={handlePredict}
+            className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end"
+          >
             <div className="flex-1">
-              <label htmlFor="sim-channel" className="mb-1.5 block text-xs font-500 text-muted-foreground">
+              <label
+                htmlFor="sim-channel"
+                className="mb-1.5 block text-xs font-500 text-muted-foreground"
+              >
                 Channel
               </label>
               <input
@@ -162,7 +174,10 @@ export default function CampaignSimulator() {
               </datalist>
             </div>
             <div className="flex-1">
-              <label htmlFor="sim-budget" className="mb-1.5 block text-xs font-500 text-muted-foreground">
+              <label
+                htmlFor="sim-budget"
+                className="mb-1.5 block text-xs font-500 text-muted-foreground"
+              >
                 Proposed Budget (₹)
               </label>
               <input
@@ -261,9 +276,12 @@ export default function CampaignSimulator() {
               </div>
 
               <p className={`text-xs ${successScoreColor(prediction.success_score)}`}>
-                This proposed campaign would rank in the {prediction.success_score >= 50 ? 'top' : 'bottom'}{' '}
-                {prediction.success_score >= 50 ? 100 - prediction.success_score : prediction.success_score}% of
-                your historical campaigns on ROI and conversion rate combined.
+                This proposed campaign would rank in the{' '}
+                {prediction.success_score >= 50 ? 'top' : 'bottom'}{' '}
+                {prediction.success_score >= 50
+                  ? 100 - prediction.success_score
+                  : prediction.success_score}
+                % of your historical campaigns on ROI and conversion rate combined.
               </p>
             </div>
           )}

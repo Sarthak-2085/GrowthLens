@@ -1,9 +1,25 @@
 'use client';
 
 import React, { useState } from 'react';
-import { User, Globe, Bell, Download, Check, Moon, Sun, Monitor, Mail, Smartphone, TrendingUp, AlertTriangle, FileText, Database, Table, Save, RefreshCw,  } from 'lucide-react';
-
-
+import {
+  User,
+  Globe,
+  Bell,
+  Download,
+  Check,
+  Moon,
+  Sun,
+  Monitor,
+  Mail,
+  Smartphone,
+  TrendingUp,
+  AlertTriangle,
+  FileText,
+  Database,
+  Table,
+  Save,
+  RefreshCw,
+} from 'lucide-react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -151,9 +167,7 @@ export default function SettingsClient() {
   const [savedBanner, setSavedBanner] = useState(false);
 
   const toggleNotification = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, enabled: !n.enabled } : n))
-    );
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, enabled: !n.enabled } : n)));
   };
 
   const handleSave = () => {
@@ -254,7 +268,8 @@ export default function SettingsClient() {
                     onClick={() => setTheme(id as typeof theme)}
                     className={`flex flex-col items-center gap-1.5 rounded-lg border px-3 py-3 text-xs font-600 transition-all ${
                       theme === id
-                        ? 'border-primary bg-primary/10 text-primary' :'border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground'
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground'
                     }`}
                   >
                     <ThemeIcon size={16} />
@@ -276,7 +291,8 @@ export default function SettingsClient() {
                     onClick={() => setDateFormat(fmt.id)}
                     className={`flex items-center justify-between rounded-lg border px-3 py-2 text-xs transition-all ${
                       dateFormat === fmt.id
-                        ? 'border-primary bg-primary/10 text-primary' :'border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground'
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-border bg-background text-muted-foreground hover:border-primary/40 hover:text-foreground'
                     }`}
                   >
                     <span className="font-600">{fmt.label}</span>
@@ -391,10 +407,7 @@ export default function SettingsClient() {
                       {notif.description}
                     </p>
                   </div>
-                  <Toggle
-                    enabled={notif.enabled}
-                    onChange={() => toggleNotification(notif.id)}
-                  />
+                  <Toggle enabled={notif.enabled} onChange={() => toggleNotification(notif.id)} />
                 </div>
               );
             })}
@@ -447,7 +460,8 @@ export default function SettingsClient() {
                       onClick={() => setExportFormat(fmt.id)}
                       className={`flex w-full items-center gap-3 rounded-lg border px-4 py-3 text-left transition-all ${
                         exportFormat === fmt.id
-                          ? 'border-primary bg-primary/8' :'border-border bg-background hover:border-primary/30 hover:bg-white/3'
+                          ? 'border-primary bg-primary/8'
+                          : 'border-border bg-background hover:border-primary/30 hover:bg-white/3'
                       }`}
                     >
                       <div
@@ -457,7 +471,9 @@ export default function SettingsClient() {
                       >
                         <FmtIcon
                           size={14}
-                          className={exportFormat === fmt.id ? 'text-primary' : 'text-muted-foreground'}
+                          className={
+                            exportFormat === fmt.id ? 'text-primary' : 'text-muted-foreground'
+                          }
                         />
                       </div>
                       <div className="flex-1">
@@ -488,14 +504,18 @@ export default function SettingsClient() {
                 <div className="flex items-center justify-between rounded-lg border border-border bg-background px-4 py-3">
                   <div>
                     <p className="text-sm font-600 text-foreground">Charts & Visualisations</p>
-                    <p className="text-xs text-muted-foreground">Embed chart images in PDF exports</p>
+                    <p className="text-xs text-muted-foreground">
+                      Embed chart images in PDF exports
+                    </p>
                   </div>
                   <Toggle enabled={includeCharts} onChange={setIncludeCharts} />
                 </div>
                 <div className="flex items-center justify-between rounded-lg border border-border bg-background px-4 py-3">
                   <div>
                     <p className="text-sm font-600 text-foreground">AI Recommendations</p>
-                    <p className="text-xs text-muted-foreground">Include AI-generated insights in export</p>
+                    <p className="text-xs text-muted-foreground">
+                      Include AI-generated insights in export
+                    </p>
                   </div>
                   <Toggle enabled={includeRecommendations} onChange={setIncludeRecommendations} />
                 </div>
@@ -519,7 +539,8 @@ export default function SettingsClient() {
 
             {/* Info note */}
             <p className="text-xs text-muted-foreground leading-relaxed border-t border-border pt-3">
-              Scheduled exports and PDF generation require backend integration. Connect your FastAPI backend to enable full export functionality.
+              Scheduled exports and PDF generation require backend integration. Connect your FastAPI
+              backend to enable full export functionality.
             </p>
           </div>
         </div>

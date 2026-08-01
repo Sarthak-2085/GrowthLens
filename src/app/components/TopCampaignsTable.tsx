@@ -36,12 +36,24 @@ export default function TopCampaignsTable() {
       <table className="w-full min-w-[640px] text-sm">
         <thead>
           <tr className="border-b border-border">
-            <th className="pb-3 text-left text-xs font-600 uppercase tracking-wider text-muted-foreground">Campaign</th>
-            <th className="pb-3 text-left text-xs font-600 uppercase tracking-wider text-muted-foreground">Channel</th>
-            <th className="pb-3 text-right text-xs font-600 uppercase tracking-wider text-muted-foreground">Budget</th>
-            <th className="pb-3 text-right text-xs font-600 uppercase tracking-wider text-muted-foreground">Revenue</th>
-            <th className="pb-3 text-right text-xs font-600 uppercase tracking-wider text-muted-foreground">ROI</th>
-            <th className="pb-3 text-left text-xs font-600 uppercase tracking-wider text-muted-foreground pl-4">Status</th>
+            <th className="pb-3 text-left text-xs font-600 uppercase tracking-wider text-muted-foreground">
+              Campaign
+            </th>
+            <th className="pb-3 text-left text-xs font-600 uppercase tracking-wider text-muted-foreground">
+              Channel
+            </th>
+            <th className="pb-3 text-right text-xs font-600 uppercase tracking-wider text-muted-foreground">
+              Budget
+            </th>
+            <th className="pb-3 text-right text-xs font-600 uppercase tracking-wider text-muted-foreground">
+              Revenue
+            </th>
+            <th className="pb-3 text-right text-xs font-600 uppercase tracking-wider text-muted-foreground">
+              ROI
+            </th>
+            <th className="pb-3 text-left text-xs font-600 uppercase tracking-wider text-muted-foreground pl-4">
+              Status
+            </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-border/50">
@@ -52,21 +64,33 @@ export default function TopCampaignsTable() {
             return (
               <tr key={campaign.id} className="group transition-colors hover:bg-white/3">
                 <td className="py-3 pr-4">
-                  <p className="font-500 text-foreground truncate max-w-[200px]" title={campaign.campaign_name}>
+                  <p
+                    className="font-500 text-foreground truncate max-w-[200px]"
+                    title={campaign.campaign_name}
+                  >
                     {campaign.campaign_name}
                   </p>
                 </td>
                 <td className="py-3 pr-4">
                   <div className="flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ background: campaign.channelColor }} />
-                    <span className="text-xs text-muted-foreground whitespace-nowrap">{campaign.channel}</span>
+                    <span
+                      className="h-2 w-2 rounded-full flex-shrink-0"
+                      style={{ background: campaign.channelColor }}
+                    />
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">
+                      {campaign.channel}
+                    </span>
                   </div>
                 </td>
                 <td className="py-3 pr-4 text-right">
-                  <span className="font-mono text-xs text-muted-foreground tabular-nums">{formatINR(campaign.budget, true)}</span>
+                  <span className="font-mono text-xs text-muted-foreground tabular-nums">
+                    {formatINR(campaign.budget, true)}
+                  </span>
                 </td>
                 <td className="py-3 pr-4 text-right">
-                  <span className="font-mono text-xs font-600 text-foreground tabular-nums">{formatINR(campaign.revenue, true)}</span>
+                  <span className="font-mono text-xs font-600 text-foreground tabular-nums">
+                    {formatINR(campaign.revenue, true)}
+                  </span>
                 </td>
                 <td className="py-3 pr-4 text-right">
                   <span
@@ -74,7 +98,8 @@ export default function TopCampaignsTable() {
                       roi >= 100 ? 'text-positive' : roi >= 0 ? 'text-warning' : 'text-negative'
                     }`}
                   >
-                    {roiPositive ? '+' : ''}{roi}%
+                    {roiPositive ? '+' : ''}
+                    {roi}%
                   </span>
                 </td>
                 <td className="py-3 pl-4">

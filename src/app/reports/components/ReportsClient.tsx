@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import React, { useMemo, useState } from 'react';
 import {
   FileBarChart,
@@ -23,7 +24,14 @@ import {
 import { toast } from 'sonner';
 import { useCampaigns } from '../../components/CampaignsProvider';
 import { useAnalytics } from '../../components/AnalyticsProvider';
-import { computeROI, computeCTR, computeCVR, computeCPC, computeCPA, formatINR } from '@/lib/metrics';
+import {
+  computeROI,
+  computeCTR,
+  computeCVR,
+  computeCPC,
+  computeCPA,
+  formatINR,
+} from '@/lib/metrics';
 import type { Campaign, Recommendation } from '@/lib/api';
 
 const typeIcons: Record<Recommendation['type'], string> = {
@@ -52,7 +60,13 @@ interface TrendRow {
 function buildChannelBreakdown(campaigns: Campaign[]): ChannelRow[] {
   const map = new Map<string, ChannelRow>();
   for (const c of campaigns) {
-    const row = map.get(c.channel) || { channel: c.channel, budget: 0, revenue: 0, roi: 0, conversions: 0 };
+    const row = map.get(c.channel) || {
+      channel: c.channel,
+      budget: 0,
+      revenue: 0,
+      roi: 0,
+      conversions: 0,
+    };
     row.budget += c.budget;
     row.revenue += c.revenue;
     row.conversions += c.conversions;
@@ -96,8 +110,21 @@ function downloadBlob(content: string, filename: string, mimeType: string) {
 
 function buildCSV(campaigns: Campaign[]): string {
   const headers = [
-    'campaign', 'channel', 'status', 'budget', 'revenue', 'clicks', 'impressions', 'conversions',
-    'roi_pct', 'ctr_pct', 'cvr_pct', 'cpc', 'cpa', 'start_date', 'end_date',
+    'campaign',
+    'channel',
+    'status',
+    'budget',
+    'revenue',
+    'clicks',
+    'impressions',
+    'conversions',
+    'roi_pct',
+    'ctr_pct',
+    'cvr_pct',
+    'cpc',
+    'cpa',
+    'start_date',
+    'end_date',
   ];
   const rows = campaigns.map((c) => [
     c.campaign_name,
@@ -126,7 +153,11 @@ function buildPrintHTML(
   totals: ReturnType<typeof computeTotals>
 ): string {
   const now = new Date();
-  const dateStr = now.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' });
+  const dateStr = now.toLocaleDateString('en-IN', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+  });
   const isIncluded = (id: string) => sections.find((s) => s.id === id)?.included;
 
   const enriched = campaigns.map((c) => ({
@@ -279,19 +310,29 @@ function buildPrintHTML(
     </div>
   </div>
 
-  ${isIncluded('kpis') ? `
+  ${
+    isIncluded('kpis')
+      ? `
   <div class="section">
     <div class="section-title">Executive Summary — Key Performance Indicators</div>
     <div class="kpi-grid">
-      ${kpiRows.map(([label, value]) => `
+      ${kpiRows
+        .map(
+          ([label, value]) => `
         <div class="kpi-card">
           <div class="kpi-label">${label}</div>
           <div class="kpi-value">${value}</div>
-        </div>`).join('')}
+        </div>`
+        )
+        .join('')}
     </div>
-  </div>` : ''}
+  </div>`
+      : ''
+  }
 
-  ${isIncluded('campaigns') ? `
+  ${
+    isIncluded('campaigns')
+      ? `
   <div class="section">
     <div class="section-title">Campaign Breakdown (Sorted by ROI)</div>
     <table>
@@ -305,12 +346,18 @@ function buildPrintHTML(
       </thead>
       <tbody>${campaignRows}</tbody>
     </table>
-  </div>` : ''}
+  </div>`
+      : ''
+  }
 
-  ${isIncluded('channels') ? `
+  ${
+    isIncluded('channels')
+      ? `
   <div class="section">
     <div class="section-title">Channel Performance Summary</div>
-    ${channelRows ? `
+    ${
+      channelRows
+        ? `
     <table>
       <thead>
         <tr>
@@ -322,13 +369,21 @@ function buildPrintHTML(
         </tr>
       </thead>
       <tbody>${channelRows}</tbody>
-    </table>` : '<p class="empty-note">No channel data available.</p>'}
-  </div>` : ''}
+    </table>`
+        : '<p class="empty-note">No channel data available.</p>'
+    }
+  </div>`
+      : ''
+  }
 
-  ${isIncluded('trend') ? `
+  ${
+    isIncluded('trend')
+      ? `
   <div class="section">
     <div class="section-title">Monthly Revenue Trend</div>
-    ${trendRows ? `
+    ${
+      trendRows
+        ? `
     <table>
       <thead>
         <tr>
@@ -340,14 +395,22 @@ function buildPrintHTML(
         </tr>
       </thead>
       <tbody>${trendRows}</tbody>
-    </table>` : '<p class="empty-note">Not enough campaigns with start dates spanning multiple months to show a trend.</p>'}
-  </div>` : ''}
+    </table>`
+        : '<p class="empty-note">Not enough campaigns with start dates spanning multiple months to show a trend.</p>'
+    }
+  </div>`
+      : ''
+  }
 
-  ${isIncluded('recommendations') ? `
+  ${
+    isIncluded('recommendations')
+      ? `
   <div class="section">
     <div class="section-title">AI-Powered Recommendations (${recommendations.length} insights)</div>
     ${recCards || '<p class="empty-note">No actionable recommendations right now — campaigns are performing within normal ranges.</p>'}
-  </div>` : ''}
+  </div>`
+      : ''
+  }
 
   <div class="report-footer">
     <span>GrowthLens · AI Marketing Intelligence Platform</span>
@@ -367,7 +430,15 @@ function computeTotals(campaigns: Campaign[]) {
   const totalImpressions = campaigns.reduce((s, c) => s + c.impressions, 0);
   const avgROI = computeROI(totalRevenue, totalBudget);
   const avgCTR = computeCTR(totalClicks, totalImpressions);
-  return { totalBudget, totalRevenue, totalConversions, totalClicks, totalImpressions, avgROI, avgCTR };
+  return {
+    totalBudget,
+    totalRevenue,
+    totalConversions,
+    totalClicks,
+    totalImpressions,
+    avgROI,
+    avgCTR,
+  };
 }
 
 type ExportFormat = 'pdf' | 'csv';
@@ -387,16 +458,46 @@ export default function ReportsClient() {
   const [generated, setGenerated] = useState(false);
   const [format, setFormat] = useState<ExportFormat>('pdf');
   const [sections, setSections] = useState<ReportSection[]>([
-    { id: 'kpis', label: 'KPI Summary', description: 'Total budget, revenue, ROI, CTR, conversions', included: true },
-    { id: 'campaigns', label: 'Campaign Breakdown', description: 'Per-campaign metrics sorted by ROI', included: true },
-    { id: 'channels', label: 'Channel Performance', description: 'Budget and revenue by marketing channel', included: true },
-    { id: 'trend', label: 'Revenue Trend', description: 'Monthly revenue and budget over time', included: true },
-    { id: 'recommendations', label: 'AI Recommendations', description: 'AI-generated budget and optimization insights', included: true },
+    {
+      id: 'kpis',
+      label: 'KPI Summary',
+      description: 'Total budget, revenue, ROI, CTR, conversions',
+      included: true,
+    },
+    {
+      id: 'campaigns',
+      label: 'Campaign Breakdown',
+      description: 'Per-campaign metrics sorted by ROI',
+      included: true,
+    },
+    {
+      id: 'channels',
+      label: 'Channel Performance',
+      description: 'Budget and revenue by marketing channel',
+      included: true,
+    },
+    {
+      id: 'trend',
+      label: 'Revenue Trend',
+      description: 'Monthly revenue and budget over time',
+      included: true,
+    },
+    {
+      id: 'recommendations',
+      label: 'AI Recommendations',
+      description: 'AI-generated budget and optimization insights',
+      included: true,
+    },
   ]);
 
   const totals = useMemo(() => computeTotals(campaigns), [campaigns]);
   const enriched = useMemo(
-    () => campaigns.map((c) => ({ ...c, roi: computeROI(c.revenue, c.budget), ctr: computeCTR(c.clicks, c.impressions) })),
+    () =>
+      campaigns.map((c) => ({
+        ...c,
+        roi: computeROI(c.revenue, c.budget),
+        ctr: computeCTR(c.clicks, c.impressions),
+      })),
     [campaigns]
   );
 
@@ -412,8 +513,14 @@ export default function ReportsClient() {
 
     if (format === 'csv') {
       const csv = buildCSV(campaigns);
-      downloadBlob(csv, `growthlens_campaigns_${new Date().toISOString().slice(0, 10)}.csv`, 'text/csv');
-      toast.success('CSV exported', { description: `${campaigns.length} campaigns with computed metrics.` });
+      downloadBlob(
+        csv,
+        `growthlens_campaigns_${new Date().toISOString().slice(0, 10)}.csv`,
+        'text/csv'
+      );
+      toast.success('CSV exported', {
+        description: `${campaigns.length} campaigns with computed metrics.`,
+      });
       return;
     }
 
@@ -424,7 +531,9 @@ export default function ReportsClient() {
     setTimeout(() => {
       setIsGenerating(false);
       setGenerated(true);
-      toast.success('Report ready!', { description: 'Click "Open Report" to view and print/save as PDF.' });
+      toast.success('Report ready!', {
+        description: 'Click "Open Report" to view and print/save as PDF.',
+      });
     }, 600);
   };
 
@@ -450,7 +559,8 @@ export default function ReportsClient() {
         <div>
           <h1 className="text-2xl font-700 text-foreground tracking-tight">Report Generation</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Export your dashboard data as a PDF summary or raw CSV — real campaigns, real AI recommendations.
+            Export your dashboard data as a PDF summary or raw CSV — real campaigns, real AI
+            recommendations.
           </p>
         </div>
         <div className="flex items-center gap-2 rounded-lg border border-primary/20 bg-primary/5 px-3 py-2">
@@ -466,14 +576,15 @@ export default function ReportsClient() {
           </div>
           <h3 className="text-base font-600 text-foreground mb-1">No campaigns to report on yet</h3>
           <p className="text-sm text-muted-foreground mb-4 max-w-sm">
-            Upload a campaign CSV first — reports are generated from your real data, not placeholders.
+            Upload a campaign CSV first — reports are generated from your real data, not
+            placeholders.
           </p>
-          <a
+          <Link
             href="/upload-data"
             className="rounded-lg bg-primary px-4 py-2 text-sm font-600 text-primary-foreground transition-all duration-150 hover:bg-primary/90 active:scale-95"
           >
             Upload CSV
-          </a>
+          </Link>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
@@ -486,7 +597,9 @@ export default function ReportsClient() {
                 <button
                   onClick={() => setFormat('pdf')}
                   className={`flex flex-col items-center gap-1.5 rounded-lg border px-3 py-3 text-xs font-600 transition-all duration-150 ${
-                    format === 'pdf' ? 'border-primary/40 bg-primary/10 text-primary' : 'border-border bg-card/30 text-muted-foreground hover:bg-card/60'
+                    format === 'pdf'
+                      ? 'border-primary/40 bg-primary/10 text-primary'
+                      : 'border-border bg-card/30 text-muted-foreground hover:bg-card/60'
                   }`}
                 >
                   <FileText size={16} />
@@ -495,7 +608,9 @@ export default function ReportsClient() {
                 <button
                   onClick={() => setFormat('csv')}
                   className={`flex flex-col items-center gap-1.5 rounded-lg border px-3 py-3 text-xs font-600 transition-all duration-150 ${
-                    format === 'csv' ? 'border-primary/40 bg-primary/10 text-primary' : 'border-border bg-card/30 text-muted-foreground hover:bg-card/60'
+                    format === 'csv'
+                      ? 'border-primary/40 bg-primary/10 text-primary'
+                      : 'border-border bg-card/30 text-muted-foreground hover:bg-card/60'
                   }`}
                 >
                   <FileSpreadsheet size={16} />
@@ -519,19 +634,34 @@ export default function ReportsClient() {
                     <label
                       key={s.id}
                       className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-all duration-150 ${
-                        s.included ? 'border-primary/30 bg-primary/5' : 'border-border bg-card/30 hover:bg-card/60'
+                        s.included
+                          ? 'border-primary/30 bg-primary/5'
+                          : 'border-border bg-card/30 hover:bg-card/60'
                       }`}
                     >
                       <div className="mt-0.5 flex-shrink-0">
-                        <input type="checkbox" checked={s.included} onChange={() => toggleSection(s.id)} className="sr-only" />
+                        <input
+                          type="checkbox"
+                          checked={s.included}
+                          onChange={() => toggleSection(s.id)}
+                          className="sr-only"
+                        />
                         <div
                           className={`h-4 w-4 rounded border-2 flex items-center justify-center transition-all ${
-                            s.included ? 'border-primary bg-primary' : 'border-border bg-transparent'
+                            s.included
+                              ? 'border-primary bg-primary'
+                              : 'border-border bg-transparent'
                           }`}
                         >
                           {s.included && (
                             <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
-                              <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                              <path
+                                d="M1 4L3.5 6.5L9 1"
+                                stroke="white"
+                                strokeWidth="1.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
                             </svg>
                           )}
                         </div>
@@ -588,14 +718,19 @@ export default function ReportsClient() {
                 <div className="flex items-center gap-2 mb-4">
                   <FileSpreadsheet size={15} className="text-muted-foreground" />
                   <h3 className="text-sm font-600 text-foreground">CSV Preview</h3>
-                  <span className="ml-auto text-2xs text-muted-foreground">{campaigns.length} rows</span>
+                  <span className="ml-auto text-2xs text-muted-foreground">
+                    {campaigns.length} rows
+                  </span>
                 </div>
                 <div className="overflow-x-auto rounded-lg border border-border">
                   <table className="w-full text-xs min-w-[600px]">
                     <thead className="bg-muted/40">
                       <tr>
                         {['Campaign', 'Channel', 'Budget', 'Revenue', 'ROI'].map((h) => (
-                          <th key={h} className="px-3 py-2 text-left text-2xs font-600 uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+                          <th
+                            key={h}
+                            className="px-3 py-2 text-left text-2xs font-600 uppercase tracking-wider text-muted-foreground whitespace-nowrap"
+                          >
                             {h}
                           </th>
                         ))}
@@ -604,12 +739,21 @@ export default function ReportsClient() {
                     <tbody className="divide-y divide-border/40">
                       {enriched.slice(0, 6).map((c) => (
                         <tr key={c.id}>
-                          <td className="px-3 py-2 text-foreground font-500 truncate max-w-[160px]">{c.campaign_name}</td>
+                          <td className="px-3 py-2 text-foreground font-500 truncate max-w-[160px]">
+                            {c.campaign_name}
+                          </td>
                           <td className="px-3 py-2 text-muted-foreground">{c.channel}</td>
-                          <td className="px-3 py-2 font-mono text-foreground">{formatINR(c.budget, true)}</td>
-                          <td className="px-3 py-2 font-mono text-foreground">{formatINR(c.revenue, true)}</td>
-                          <td className={`px-3 py-2 font-mono font-600 ${c.roi >= 0 ? 'text-positive' : 'text-negative'}`}>
-                            {c.roi > 0 ? '+' : ''}{c.roi}%
+                          <td className="px-3 py-2 font-mono text-foreground">
+                            {formatINR(c.budget, true)}
+                          </td>
+                          <td className="px-3 py-2 font-mono text-foreground">
+                            {formatINR(c.revenue, true)}
+                          </td>
+                          <td
+                            className={`px-3 py-2 font-mono font-600 ${c.roi >= 0 ? 'text-positive' : 'text-negative'}`}
+                          >
+                            {c.roi > 0 ? '+' : ''}
+                            {c.roi}%
                           </td>
                         </tr>
                       ))}
@@ -617,10 +761,13 @@ export default function ReportsClient() {
                   </table>
                 </div>
                 {campaigns.length > 6 && (
-                  <p className="mt-2 text-2xs text-muted-foreground text-center">+{campaigns.length - 6} more rows in the exported file</p>
+                  <p className="mt-2 text-2xs text-muted-foreground text-center">
+                    +{campaigns.length - 6} more rows in the exported file
+                  </p>
                 )}
                 <p className="mt-3 text-2xs text-muted-foreground">
-                  Includes every campaign plus computed ROI, CTR, CVR, CPC, and CPA columns — ready for Excel or Sheets.
+                  Includes every campaign plus computed ROI, CTR, CVR, CPC, and CPA columns — ready
+                  for Excel or Sheets.
                 </p>
               </div>
             ) : (
@@ -643,13 +790,21 @@ export default function ReportsClient() {
                     <div className="flex items-start justify-between mb-3">
                       <div>
                         <p className="text-base font-800 text-primary">GrowthLens</p>
-                        <p className="text-2xs text-muted-foreground">AI-Powered Marketing Decision Intelligence</p>
+                        <p className="text-2xs text-muted-foreground">
+                          AI-Powered Marketing Decision Intelligence
+                        </p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs font-600 text-foreground">Campaign Performance Report</p>
+                        <p className="text-xs font-600 text-foreground">
+                          Campaign Performance Report
+                        </p>
                         <p className="text-2xs text-muted-foreground flex items-center gap-1 justify-end mt-0.5">
                           <Calendar size={10} />
-                          {new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}
+                          {new Date().toLocaleDateString('en-IN', {
+                            day: '2-digit',
+                            month: 'long',
+                            year: 'numeric',
+                          })}
                         </p>
                       </div>
                     </div>
@@ -665,18 +820,31 @@ export default function ReportsClient() {
                       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                         {[
                           { label: 'Campaigns', value: campaigns.length.toString(), icon: Target },
-                          { label: 'Total Revenue', value: formatINR(totals.totalRevenue, true), icon: DollarSign },
+                          {
+                            label: 'Total Revenue',
+                            value: formatINR(totals.totalRevenue, true),
+                            icon: DollarSign,
+                          },
                           { label: 'Average ROI', value: `${totals.avgROI}%`, icon: TrendingUp },
-                          { label: 'Conversions', value: totals.totalConversions.toLocaleString('en-IN'), icon: Users },
+                          {
+                            label: 'Conversions',
+                            value: totals.totalConversions.toLocaleString('en-IN'),
+                            icon: Users,
+                          },
                         ].map((kpi) => {
                           const KpiIcon = kpi.icon;
                           return (
-                            <div key={kpi.label} className="rounded-lg border border-border bg-card/50 p-3">
+                            <div
+                              key={kpi.label}
+                              className="rounded-lg border border-border bg-card/50 p-3"
+                            >
                               <div className="flex items-center gap-1.5 mb-1.5">
                                 <KpiIcon size={11} className="text-muted-foreground" />
                                 <span className="text-2xs text-muted-foreground">{kpi.label}</span>
                               </div>
-                              <p className="text-sm font-700 font-mono text-foreground">{kpi.value}</p>
+                              <p className="text-sm font-700 font-mono text-foreground">
+                                {kpi.value}
+                              </p>
                             </div>
                           );
                         })}
@@ -695,24 +863,39 @@ export default function ReportsClient() {
                           <thead className="bg-muted/40">
                             <tr>
                               {['Campaign', 'Channel', 'Revenue', 'ROI', 'CTR'].map((h) => (
-                                <th key={h} className="px-3 py-2 text-left text-2xs font-600 uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+                                <th
+                                  key={h}
+                                  className="px-3 py-2 text-left text-2xs font-600 uppercase tracking-wider text-muted-foreground whitespace-nowrap"
+                                >
                                   {h}
                                 </th>
                               ))}
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-border/40">
-                            {[...enriched].sort((a, b) => b.roi - a.roi).slice(0, 4).map((c) => (
-                              <tr key={c.id} className="hover:bg-muted/20">
-                                <td className="px-3 py-2 text-foreground font-500 truncate max-w-[140px]">{c.campaign_name}</td>
-                                <td className="px-3 py-2 text-muted-foreground">{c.channel}</td>
-                                <td className="px-3 py-2 font-mono text-foreground">{formatINR(c.revenue, true)}</td>
-                                <td className={`px-3 py-2 font-mono font-600 ${c.roi >= 0 ? 'text-positive' : 'text-negative'}`}>
-                                  {c.roi > 0 ? '+' : ''}{c.roi}%
-                                </td>
-                                <td className="px-3 py-2 font-mono text-muted-foreground">{c.ctr}%</td>
-                              </tr>
-                            ))}
+                            {[...enriched]
+                              .sort((a, b) => b.roi - a.roi)
+                              .slice(0, 4)
+                              .map((c) => (
+                                <tr key={c.id} className="hover:bg-muted/20">
+                                  <td className="px-3 py-2 text-foreground font-500 truncate max-w-[140px]">
+                                    {c.campaign_name}
+                                  </td>
+                                  <td className="px-3 py-2 text-muted-foreground">{c.channel}</td>
+                                  <td className="px-3 py-2 font-mono text-foreground">
+                                    {formatINR(c.revenue, true)}
+                                  </td>
+                                  <td
+                                    className={`px-3 py-2 font-mono font-600 ${c.roi >= 0 ? 'text-positive' : 'text-negative'}`}
+                                  >
+                                    {c.roi > 0 ? '+' : ''}
+                                    {c.roi}%
+                                  </td>
+                                  <td className="px-3 py-2 font-mono text-muted-foreground">
+                                    {c.ctr}%
+                                  </td>
+                                </tr>
+                              ))}
                           </tbody>
                         </table>
                       </div>
@@ -726,7 +909,9 @@ export default function ReportsClient() {
                         AI Recommendations ({recommendations.length} insights)
                       </p>
                       {recommendations.length === 0 ? (
-                        <p className="text-2xs text-muted-foreground italic">No actionable recommendations right now.</p>
+                        <p className="text-2xs text-muted-foreground italic">
+                          No actionable recommendations right now.
+                        </p>
                       ) : (
                         <div className="space-y-2">
                           {recommendations.slice(0, 3).map((rec) => {
@@ -736,15 +921,37 @@ export default function ReportsClient() {
                               optimize: 'border-warning/20 bg-warning/5',
                               alert: 'border-warning/20 bg-warning/5',
                             };
-                            const RecIcon = rec.type === 'increase' ? TrendingUp : rec.type === 'decrease' ? TrendingDown : rec.type === 'optimize' ? Zap : AlertTriangle;
-                            const iconColor = rec.type === 'increase' ? 'text-positive' : rec.type === 'decrease' ? 'text-negative' : 'text-warning';
+                            const RecIcon =
+                              rec.type === 'increase'
+                                ? TrendingUp
+                                : rec.type === 'decrease'
+                                  ? TrendingDown
+                                  : rec.type === 'optimize'
+                                    ? Zap
+                                    : AlertTriangle;
+                            const iconColor =
+                              rec.type === 'increase'
+                                ? 'text-positive'
+                                : rec.type === 'decrease'
+                                  ? 'text-negative'
+                                  : 'text-warning';
                             return (
-                              <div key={rec.id} className={`rounded-lg border p-3 ${typeColors[rec.type]}`}>
+                              <div
+                                key={rec.id}
+                                className={`rounded-lg border p-3 ${typeColors[rec.type]}`}
+                              >
                                 <div className="flex items-start gap-2">
-                                  <RecIcon size={13} className={`mt-0.5 flex-shrink-0 ${iconColor}`} />
+                                  <RecIcon
+                                    size={13}
+                                    className={`mt-0.5 flex-shrink-0 ${iconColor}`}
+                                  />
                                   <div>
-                                    <p className="text-xs font-600 text-foreground">{rec.headline}</p>
-                                    <p className="text-2xs text-muted-foreground mt-0.5 line-clamp-2">{rec.detail}</p>
+                                    <p className="text-xs font-600 text-foreground">
+                                      {rec.headline}
+                                    </p>
+                                    <p className="text-2xs text-muted-foreground mt-0.5 line-clamp-2">
+                                      {rec.detail}
+                                    </p>
                                   </div>
                                 </div>
                               </div>
@@ -763,7 +970,9 @@ export default function ReportsClient() {
                   {!generated && (
                     <div className="rounded-xl border border-dashed border-border bg-muted/10 px-5 py-8 text-center">
                       <FileBarChart size={28} className="mx-auto mb-2 text-muted-foreground/30" />
-                      <p className="text-sm text-muted-foreground">Click "Generate Report" to build your PDF</p>
+                      <p className="text-sm text-muted-foreground">
+                        Click &quot;Generate Report&quot; to build your PDF
+                      </p>
                       <p className="text-xs text-muted-foreground/60 mt-1">
                         {includedCount} section{includedCount !== 1 ? 's' : ''} selected
                       </p>
@@ -773,9 +982,11 @@ export default function ReportsClient() {
                   {generated && (
                     <div className="rounded-xl border border-positive/20 bg-positive/5 px-5 py-5 text-center animate-fade-in">
                       <CheckCircle2 size={28} className="mx-auto mb-2 text-positive" />
-                      <p className="text-sm font-600 text-foreground">Report Generated Successfully</p>
+                      <p className="text-sm font-600 text-foreground">
+                        Report Generated Successfully
+                      </p>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Click "Open Report &amp; Save PDF" to view and download
+                        Click &quot;Open Report &amp; Save PDF&quot; to view and download
                       </p>
                     </div>
                   )}

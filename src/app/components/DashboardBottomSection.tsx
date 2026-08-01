@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import React from 'react';
 import TopCampaignsTable from './TopCampaignsTable';
 import AIRecommendationsPanel from './AIRecommendationsPanel';
@@ -18,12 +19,12 @@ export default function DashboardBottomSection() {
             <Trophy size={16} className="text-warning" />
             <h2 className="text-base font-600 text-foreground">Top Campaigns by ROI</h2>
           </div>
-          <a
+          <Link
             href="/analytics"
             className="text-xs font-500 text-primary hover:text-primary/80 transition-colors"
           >
             View all →
-          </a>
+          </Link>
         </div>
         <TopCampaignsTable />
       </div>
@@ -37,7 +38,9 @@ export default function DashboardBottomSection() {
           <div>
             <h2 className="text-base font-600 text-foreground">AI Recommendations</h2>
             <p className="text-xs text-muted-foreground">
-              {loading ? 'Analyzing…' : `${recommendations.length} actionable insight${recommendations.length === 1 ? '' : 's'}`}
+              {loading
+                ? 'Analyzing…'
+                : `${recommendations.length} actionable insight${recommendations.length === 1 ? '' : 's'}`}
             </p>
           </div>
         </div>
