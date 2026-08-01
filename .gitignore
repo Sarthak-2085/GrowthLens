@@ -1,6 +1,5 @@
 # Node modules
 node_modules/
-package-lock.json
 
 # Next.js build output
 .next/
@@ -18,6 +17,10 @@ pnpm-debug.log*
 # OS-specific files
 .DS_Store
 Thumbs.db
+
+# Environment variables — local values only, never committed
+.env
+.env.local
 
 # Vercel deployment
 .vercel/
